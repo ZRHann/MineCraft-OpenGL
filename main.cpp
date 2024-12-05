@@ -5,7 +5,8 @@
 #define APIENTRY __stdcall
 #define CALLBACK __stdcall
 #include <GL/glu.h>
-
+#include <sstream>
+#include <iomanip>
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
 int worldWidth = 160, worldHeight = 6, worldDepth = 160;  // 地图大小
 const float PI = acos(-1);
@@ -231,6 +232,47 @@ public:
 };
 
 
+
+class FPSCounter {
+private:
+    double lastTime;
+    int frameCount;
+    float fps;
+
+public:
+    FPSCounter() : lastTime(0.0), frameCount(0), fps(0.0f) {}
+
+    // 更新 FPS
+    void update() {
+        frameCount++;
+        double currentTime = glfwGetTime();
+        
+        if (currentTime - lastTime >= 1.0) {
+            fps = frameCount / (float)(currentTime - lastTime);
+            lastTime = currentTime;
+            frameCount = 0;
+        }
+    }
+
+    // 获取 FPS
+    float getFPS() const {
+        return fps;
+    }
+
+    // 在窗口标题显示 FPS，保留一位小数
+    void drawFPS(GLFWwindow* window) const {
+        std::stringstream fpsText;
+        fpsText << std::fixed << std::setprecision(1);  // 设置精度为 1 位小数
+        fpsText << "MineCraft_OpenGL FPS: " << fps;
+        
+        // 设置窗口标题显示 FPS
+        glfwSetWindowTitle(window, fpsText.str().c_str());
+    }
+};
+
+
+
+
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     // 从window获取 Camera 实例
     Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
@@ -250,7 +292,7 @@ int main() {
     glfwSetErrorCallback(error_callback);
 
     // 创建窗口
-    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "3D Cube with GLFW", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "MineCraft_OpenGL", nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create GLFW window!" << std::endl;
         glfwTerminate();
@@ -269,6 +311,9 @@ int main() {
     // 创建地图对象
     WorldMap world(worldWidth, worldHeight, worldDepth);
     world.generateRandomMap();  // 生成随机地图
+
+    // 创建 FPS 计数器 
+    FPSCounter fpsCounter;
 
     // 启用鼠标捕获和隐藏
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  // 隐藏光标
@@ -302,6 +347,10 @@ int main() {
 
         // 绘制地图
         world.drawMap();
+
+        // 绘制 FPS
+        fpsCounter.update();
+        fpsCounter.drawFPS(window);
 
         // 交换缓冲区
         glfwSwapBuffers(window);
