@@ -7,7 +7,8 @@
 #include <GL/glu.h>
 
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
-float PI = acos(-1);
+int worldWidth = 160, worldHeight = 6, worldDepth = 160;  // 地图大小
+const float PI = acos(-1);
 
 // 错误回调函数
 void error_callback(int error, const char* description) {
@@ -263,10 +264,10 @@ int main() {
     glfwSwapInterval(1);
 
     // 创建摄像机对象
-    Camera camera;
+    Camera camera(worldWidth / 2, worldHeight + 2, worldDepth / 2);
 
     // 创建地图对象
-    WorldMap world(20, 2, 20);
+    WorldMap world(worldWidth, worldHeight, worldDepth);
     world.generateRandomMap();  // 生成随机地图
 
     // 启用鼠标捕获和隐藏
