@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cmath>
+#include <vector>
 #define APIENTRY __stdcall
 #define CALLBACK __stdcall
 #include <GL/glu.h>
@@ -13,54 +14,6 @@ void error_callback(int error, const char* description) {
     std::cerr << "Error: " << description << std::endl;
 }
 
-// 绘制正方体的函数
-void drawCube(float x, float y, float z) {
-    glBegin(GL_QUADS);
-
-    // 前面
-    glColor3f(1.0f, 0.0f, 0.0f); // 红色
-    glVertex3f(x, y, z + 1.0f);
-    glVertex3f(x + 1.0f, y, z + 1.0f);
-    glVertex3f(x + 1.0f, y + 1.0f, z + 1.0f);
-    glVertex3f(x, y + 1.0f, z + 1.0f);
-
-    // 后面
-    glColor3f(0.0f, 1.0f, 0.0f); // 绿色
-    glVertex3f(x, y, z);
-    glVertex3f(x, y + 1.0f, z);
-    glVertex3f(x + 1.0f, y + 1.0f, z);
-    glVertex3f(x + 1.0f, y, z);
-
-    // 左面
-    glColor3f(0.0f, 0.0f, 1.0f); // 蓝色
-    glVertex3f(x, y, z);
-    glVertex3f(x, y, z + 1.0f);
-    glVertex3f(x, y + 1.0f, z + 1.0f);
-    glVertex3f(x, y + 1.0f, z);
-
-    // 右面
-    glColor3f(1.0f, 1.0f, 0.0f); // 黄色
-    glVertex3f(x + 1.0f, y, z);
-    glVertex3f(x + 1.0f, y + 1.0f, z);
-    glVertex3f(x + 1.0f, y + 1.0f, z + 1.0f);
-    glVertex3f(x + 1.0f, y, z + 1.0f);
-
-    // 顶面
-    glColor3f(1.0f, 0.0f, 1.0f); // 紫色
-    glVertex3f(x, y + 1.0f, z);
-    glVertex3f(x, y + 1.0f, z + 1.0f);
-    glVertex3f(x + 1.0f, y + 1.0f, z + 1.0f);
-    glVertex3f(x + 1.0f, y + 1.0f, z);
-
-    // 底面
-    glColor3f(0.0f, 1.0f, 1.0f); // 青色
-    glVertex3f(x, y, z);
-    glVertex3f(x + 1.0f, y, z);
-    glVertex3f(x + 1.0f, y, z + 1.0f);
-    glVertex3f(x, y, z + 1.0f);
-
-    glEnd();
-}
 
 // 设置透视投影
 void setProjection(int width, int height) {
@@ -178,6 +131,105 @@ public:
     }
 };
 
+class WorldMap {
+public:
+    int width, height, depth; // 地图的最大尺寸
+    std::vector<std::vector<std::vector<int>>> map; // 方块类型的3D数组
+
+    WorldMap(int w, int h, int d) : width(w), height(h), depth(d) {
+        map.resize(width, std::vector<std::vector<int>>(height, std::vector<int>(depth, 0)));
+    }
+
+    // 设置某个位置的方块类型
+    void setBlock(int x, int y, int z, int type) {
+        if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth) {
+            map[x][y][z] = type;
+        }
+    }
+
+    // 获取某个位置的方块类型
+    int getBlock(int x, int y, int z) const {
+        if (x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth) {
+            return map[x][y][z];
+        }
+        return -1; // 如果越界则返回-1
+    }
+
+    // 在地图上随机生成一些方块（或其他生成逻辑）
+    void generateRandomMap() {
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                for (int z = 0; z < depth; ++z) {
+                    setBlock(x, y, z, rand() % 2);  // 随机生成0或1的方块类型
+                }
+            }
+        }
+    }
+
+    // 绘制正方体
+    void drawCube(int x, int y, int z) {
+        glBegin(GL_QUADS);
+
+        // 前面
+        glColor3f(1.0f, 0.0f, 0.0f); // 红色
+        glVertex3f(x, y, z + 1.0f);
+        glVertex3f(x + 1.0f, y, z + 1.0f);
+        glVertex3f(x + 1.0f, y + 1.0f, z + 1.0f);
+        glVertex3f(x, y + 1.0f, z + 1.0f);
+
+        // 后面
+        glColor3f(0.0f, 1.0f, 0.0f); // 绿色
+        glVertex3f(x, y, z);
+        glVertex3f(x, y + 1.0f, z);
+        glVertex3f(x + 1.0f, y + 1.0f, z);
+        glVertex3f(x + 1.0f, y, z);
+
+        // 左面
+        glColor3f(0.0f, 0.0f, 1.0f); // 蓝色
+        glVertex3f(x, y, z);
+        glVertex3f(x, y, z + 1.0f);
+        glVertex3f(x, y + 1.0f, z + 1.0f);
+        glVertex3f(x, y + 1.0f, z);
+
+        // 右面
+        glColor3f(1.0f, 1.0f, 0.0f); // 黄色
+        glVertex3f(x + 1.0f, y, z);
+        glVertex3f(x + 1.0f, y + 1.0f, z);
+        glVertex3f(x + 1.0f, y + 1.0f, z + 1.0f);
+        glVertex3f(x + 1.0f, y, z + 1.0f);
+
+        // 顶面
+        glColor3f(1.0f, 0.0f, 1.0f); // 紫色
+        glVertex3f(x, y + 1.0f, z);
+        glVertex3f(x, y + 1.0f, z + 1.0f);
+        glVertex3f(x + 1.0f, y + 1.0f, z + 1.0f);
+        glVertex3f(x + 1.0f, y + 1.0f, z);
+
+        // 底面
+        glColor3f(0.0f, 1.0f, 1.0f); // 青色
+        glVertex3f(x, y, z);
+        glVertex3f(x + 1.0f, y, z);
+        glVertex3f(x + 1.0f, y, z + 1.0f);
+        glVertex3f(x, y, z + 1.0f);
+
+        glEnd();
+    }
+
+    // 绘制整个地图
+    void drawMap() {
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                for (int z = 0; z < depth; ++z) {
+                    if (getBlock(x, y, z) == 1) {  // 只有方块类型为1时才绘制
+                        drawCube(x, y, z);
+                    }
+                }
+            }
+        }
+    }
+};
+
+
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     // 从window获取 Camera 实例
     Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
@@ -213,6 +265,10 @@ int main() {
     // 创建摄像机对象
     Camera camera;
 
+    // 创建地图对象
+    WorldMap world(20, 2, 20);
+    world.generateRandomMap();  // 生成随机地图
+
     // 启用鼠标捕获和隐藏
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  // 隐藏光标
     glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);  // 设置初始位置（窗口的中心）
@@ -243,8 +299,8 @@ int main() {
         // 更新摄像机视角
         camera.setLookAt();
 
-        // 绘制正方体
-        drawCube(0.0f, 0.0f, 0.0f);
+        // 绘制地图
+        world.drawMap();
 
         // 交换缓冲区
         glfwSwapBuffers(window);
