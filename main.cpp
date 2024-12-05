@@ -7,6 +7,7 @@
 #include <GL/glu.h>
 #include <sstream>
 #include <iomanip>
+#include <FastNoiseLite.h>
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
 int worldWidth = 160, worldHeight = 6, worldDepth = 160;  // 地图大小
 const float PI = acos(-1);
@@ -157,16 +158,38 @@ public:
         return -1; // 如果越界则返回-1
     }
 
-    // 在地图上随机生成一些方块（或其他生成逻辑）
-    void generateRandomMap() {
+    // 生成随机地图
+    void generatePerlinMap() {
+        FastNoiseLite noise;
+        noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+        noise.SetFrequency(0.04f);  // 设置频率, 越低越平滑
+        int seed = rand();
+        std::cout << "Map Seed: " << seed << std::endl;
+        noise.SetSeed(seed);  // 设置种子
+
         for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    setBlock(x, y, z, rand() % 2);  // 随机生成0或1的方块类型
+            for (int z = 0; z < depth; ++z) {
+                float noiseValue = noise.GetNoise((float)x, (float)z);  // 获取噪声值 [-1, 1]
+
+                // 映射噪声值到 [0, 1]
+                float normalizedNoise = (noiseValue + 1.0f) / 2.0f;
+
+                // 根据映射后的噪声值计算高度
+                int maxHeight = height;  // 你可以设置最大高度
+                int terrainHeight = (int)(normalizedNoise * maxHeight) + 1;  // 缩放到实际高度
+
+                // 设置方块
+                for (int y = 0; y < height; ++y) {
+                    if (y < terrainHeight) {
+                        setBlock(x, y, z, 1);  // 地面方块
+                    } else {
+                        setBlock(x, y, z, 0);  // 空地
+                    }
                 }
             }
         }
     }
+
 
     // 绘制正方体
     void drawCube(int x, int y, int z) {
@@ -310,7 +333,7 @@ int main() {
 
     // 创建地图对象
     WorldMap world(worldWidth, worldHeight, worldDepth);
-    world.generateRandomMap();  // 生成随机地图
+    world.generatePerlinMap();  // 生成随机地图
 
     // 创建 FPS 计数器 
     FPSCounter fpsCounter;
