@@ -1,13 +1,19 @@
-#include <GLFW/glfw3.h>
+#define APIENTRY __stdcall
+#define CALLBACK __stdcall
+#define STB_IMAGE_IMPLEMENTATION
+#include "glad.h"
 #include <iostream>
 #include <cmath>
 #include <vector>
-#define APIENTRY __stdcall
-#define CALLBACK __stdcall
-#include <GL/glu.h>
 #include <sstream>
 #include <iomanip>
 #include <FastNoiseLite.h>
+#include <stb_image.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GLFW/glfw3.h>
+#include <unordered_map>
+
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
 int worldWidth = 160, worldHeight = 6, worldDepth = 160;  // 地图大小
 const float PI = acos(-1);
@@ -134,9 +140,72 @@ public:
     }
 };
 
+class TextureManager {
+public:
+    std::unordered_map<int, GLuint> sideTextures;    // 缓存侧面纹理
+    std::unordered_map<int, GLuint> topTextures;     // 缓存顶面纹理
+    std::unordered_map<int, GLuint> bottomTextures;  // 缓存底面纹理
+
+    GLuint loadTexture(const std::string& filepath) {
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+
+        int width, height, nrChannels;
+        unsigned char *data = stbi_load(filepath.c_str(), &width, &height, &nrChannels, 0);
+        if (data) {
+            if (nrChannels == 3) {
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            } else if (nrChannels == 4) {
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            }
+            glGenerateMipmap(GL_TEXTURE_2D);
+        } else {
+            std::cerr << "Failed to load texture: " << filepath << std::endl;
+        }
+        stbi_image_free(data);
+
+        return textureID;
+    }
+
+    // 获取方块侧面的纹理
+    GLuint getSideTexture(int blockType) {
+        if (sideTextures.find(blockType) != sideTextures.end()) {
+            return sideTextures[blockType];
+        }
+        std::string filepath = "assets/grass_block_side.png";
+        GLuint textureID = loadTexture(filepath);
+        sideTextures[blockType] = textureID;
+        return textureID;
+    }
+
+    // 获取方块顶面的纹理
+    GLuint getTopTexture(int blockType) {
+        if (topTextures.find(blockType) != topTextures.end()) {
+            return topTextures[blockType];
+        }
+        std::string filepath = "assets/grass_block_top_greened.png";
+        GLuint textureID = loadTexture(filepath);
+        topTextures[blockType] = textureID;
+        return textureID;
+    }
+
+    // 获取方块底面的纹理
+    GLuint getBottomTexture(int blockType) {
+        if (bottomTextures.find(blockType) != bottomTextures.end()) {
+            return bottomTextures[blockType];
+        }
+        std::string filepath = "assets/grass_block_top.png";
+        GLuint textureID = loadTexture(filepath);
+        bottomTextures[blockType] = textureID;
+        return textureID;
+    }
+};
+
 class WorldMap {
 public:
     int width, height, depth; // 地图的最大尺寸
+    TextureManager textureManager; // 纹理管理器
     std::vector<std::vector<std::vector<int>>> map; // 方块类型的3D数组
 
     WorldMap(int w, int h, int d) : width(w), height(h), depth(d) {
@@ -175,8 +244,7 @@ public:
                 float normalizedNoise = (noiseValue + 1.0f) / 2.0f;
 
                 // 根据映射后的噪声值计算高度
-                int maxHeight = height;  // 你可以设置最大高度
-                int terrainHeight = (int)(normalizedNoise * maxHeight) + 1;  // 缩放到实际高度
+                int terrainHeight = (int)(normalizedNoise * height) + 1;  // 缩放到实际高度
 
                 // 设置方块
                 for (int y = 0; y < height; ++y) {
@@ -190,68 +258,119 @@ public:
         }
     }
 
+    GLuint loadTexture(const char* path) {
+        int width, height, nrChannels;
+        unsigned char *data = stbi_load(path, &width, &height, &nrChannels, 0);
+        if (!data) {
+            std::cerr << "Failed to load texture: " << path << std::endl;
+            return 0;
+        }
 
-    // 绘制正方体
-    void drawCube(int x, int y, int z) {
-        glBegin(GL_QUADS);
+        GLuint texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        if (nrChannels == 3)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        else if (nrChannels == 4)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        stbi_image_free(data);
+        return texture;
+    }
+
+    void drawCube(int x, int y, int z, int blockType) {
+        // 定义不同面的颜色
+        GLfloat sideColor[3] = {0.7f, 0.7f, 0.7f};  // 侧面颜色
+        GLuint topTexture = textureManager.getTopTexture(blockType);
+        GLuint sideTexture = textureManager.getSideTexture(blockType);  // 假设有侧面纹理
+        GLuint bottomTexture = textureManager.getBottomTexture(blockType);  // 假设有底面纹理
+
+        // 绘制正方体的各个面
 
         // 前面
-        glColor3f(1.0f, 0.0f, 0.0f); // 红色
+        glBindTexture(GL_TEXTURE_2D, sideTexture); // 绑定前面纹理
+        glBegin(GL_QUADS);
+        glColor3fv(sideColor);
         glVertex3f(x, y, z + 1.0f);
         glVertex3f(x + 1.0f, y, z + 1.0f);
         glVertex3f(x + 1.0f, y + 1.0f, z + 1.0f);
         glVertex3f(x, y + 1.0f, z + 1.0f);
+        glEnd();
 
         // 后面
-        glColor3f(0.0f, 1.0f, 0.0f); // 绿色
+        glBindTexture(GL_TEXTURE_2D, sideTexture); // 绑定后面纹理
+        glBegin(GL_QUADS);
+        glColor3fv(sideColor);
         glVertex3f(x, y, z);
         glVertex3f(x, y + 1.0f, z);
         glVertex3f(x + 1.0f, y + 1.0f, z);
         glVertex3f(x + 1.0f, y, z);
+        glEnd();
 
         // 左面
-        glColor3f(0.0f, 0.0f, 1.0f); // 蓝色
+        glBindTexture(GL_TEXTURE_2D, sideTexture); // 绑定左面纹理
+        glBegin(GL_QUADS);
+        glColor3fv(sideColor);
         glVertex3f(x, y, z);
         glVertex3f(x, y, z + 1.0f);
         glVertex3f(x, y + 1.0f, z + 1.0f);
         glVertex3f(x, y + 1.0f, z);
+        glEnd();
 
         // 右面
-        glColor3f(1.0f, 1.0f, 0.0f); // 黄色
+        glBindTexture(GL_TEXTURE_2D, sideTexture); // 绑定右面纹理
+        glBegin(GL_QUADS);
+        glColor3fv(sideColor);
         glVertex3f(x + 1.0f, y, z);
         glVertex3f(x + 1.0f, y + 1.0f, z);
         glVertex3f(x + 1.0f, y + 1.0f, z + 1.0f);
         glVertex3f(x + 1.0f, y, z + 1.0f);
+        glEnd();
 
         // 顶面
-        glColor3f(1.0f, 0.0f, 1.0f); // 紫色
-        glVertex3f(x, y + 1.0f, z);
-        glVertex3f(x, y + 1.0f, z + 1.0f);
-        glVertex3f(x + 1.0f, y + 1.0f, z + 1.0f);
-        glVertex3f(x + 1.0f, y + 1.0f, z);
+        glBindTexture(GL_TEXTURE_2D, topTexture); // 绑定顶面纹理
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(x, y + 1.0f, z); // 左下角
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(x, y + 1.0f, z + 1.0f); // 左上角
+        glTexCoord2f(1.0f, 1.0f); glVertex3f(x + 1.0f, y + 1.0f, z + 1.0f); // 右上角
+        glTexCoord2f(1.0f, 0.0f); glVertex3f(x + 1.0f, y + 1.0f, z); // 右下角
+        glEnd();
 
         // 底面
-        glColor3f(0.0f, 1.0f, 1.0f); // 青色
+        glBindTexture(GL_TEXTURE_2D, bottomTexture); // 绑定底面纹理
+        glBegin(GL_QUADS);
         glVertex3f(x, y, z);
         glVertex3f(x + 1.0f, y, z);
         glVertex3f(x + 1.0f, y, z + 1.0f);
         glVertex3f(x, y, z + 1.0f);
-
         glEnd();
     }
+
+
+
 
     // 绘制整个地图
     void drawMap() {
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
                 for (int z = 0; z < depth; ++z) {
-                    if (getBlock(x, y, z) == 1) {  // 只有方块类型为1时才绘制
-                        drawCube(x, y, z);
+                    int blockType = getBlock(x, y, z);
+                    if (blockType == 1) {  // 使用1号方块
+                        drawCube(x, y, z, blockType);  // 传递方块类型以选择正确的纹理
                     }
                 }
             }
         }
     }
+
+
 };
 
 
@@ -305,12 +424,13 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 
 // 主循环
 int main() {
+    srand(time(nullptr));  // 设置随机种子
     // 初始化 GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW!" << std::endl;
         return -1;
     }
-
+    
     // 设置错误回调函数
     glfwSetErrorCallback(error_callback);
 
@@ -324,6 +444,16 @@ int main() {
 
     // 设置 OpenGL 上下文
     glfwMakeContextCurrent(window);
+
+    // 加载 OpenGL 函数
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "Failed to initialize OpenGL loader!" << std::endl;
+        return -1;
+    }
+
+    // 打印 OpenGL 版本
+    const GLubyte* version = glGetString(GL_VERSION);
+    std::cout << "OpenGL Version: " << version << std::endl;
 
     // 启用垂直同步
     glfwSwapInterval(1);
@@ -354,6 +484,11 @@ int main() {
     glViewport(0, 0, width, height);
     setProjection(width, height);
 
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    
     // 主循环
     while (!glfwWindowShouldClose(window)) {
         // 处理键盘输入
@@ -361,7 +496,6 @@ int main() {
 
         // 渲染
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
