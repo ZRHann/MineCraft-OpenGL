@@ -13,20 +13,16 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
-int worldWidth = 64, worldHeight = 8, worldDepth = 64;  // 地图大小
+int worldWidth = 65, worldHeight = 5, worldDepth = 65;  // 地图大小
 const float PI = acos(-1);
 
 // 错误回调函数
 void error_callback(int error, const char* description) {
     std::cerr << "Error: " << description << std::endl;
 }
-
 
 class WorldMap {
 public:
@@ -40,6 +36,12 @@ public:
     WorldMap(int w, int h, int d) : width(w), height(h), depth(d) {
         map.resize(width, std::vector<std::vector<int>>(height, std::vector<int>(depth, 0)));
         shader.createProgram("vertex_shader.glsl", "fragment_shader.glsl");
+        textureManager.loadTextureArray();
+        shader.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, textureManager.getTextureArrayID());
+        shader.setUniform1i("textureArray", 0);
+        
     }
 
     ~WorldMap() {
@@ -119,74 +121,82 @@ public:
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
 
         // 顶点位置属性
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
 
         // 纹理坐标属性
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
+
+        // 材质信息属性
+        glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(5 * sizeof(float)));
+        glEnableVertexAttribArray(2);
 
         glBindVertexArray(0);
     }
 
     void addCubeVertices(std::vector<float>& vertices, float x, float y, float z) {
-        // 每个面由两个三角形组成，共6个顶点
+        TextureType textureTypeTop = TextureType::GRASS_BLOCK_TOP;
+        TextureType textureTypeSide = TextureType::GRASS_BLOCK_SIDE;
+        TextureType textureTypeBottom = TextureType::GRASS_BLOCK_BOTTOM;
+
+
+        // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置、纹理坐标和材质信息
         float cubeVertices[] = {
-            
-            // Front face (6 vertices)
-            x,     y,     z,     0.0f, 0.0f,
-            x + 1, y,     z,     1.0f, 0.0f,
-            x + 1, y + 1, z,     1.0f, 1.0f,
-            x,     y + 1, z,     0.0f, 1.0f,
-            x,     y,     z,     0.0f, 0.0f, // Repeat first vertex for second triangle
-            x + 1, y + 1, z,     1.0f, 1.0f, // Repeat third vertex for second triangle
+            // Front face (侧面纹理)
+            x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
+            x + 1, y,     z,     1.0f, 0.0f, float(textureTypeSide),
+            x + 1, y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
+            x,     y + 1, z,     0.0f, 1.0f, float(textureTypeSide),
+            x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
+            x + 1, y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
 
-            // Back face (6 vertices)
-            x,     y,     z + 1, 0.0f, 0.0f,
-            x + 1, y,     z + 1, 1.0f, 0.0f,
-            x + 1, y + 1, z + 1, 1.0f, 1.0f,
-            x,     y + 1, z + 1, 0.0f, 1.0f,
-            x,     y,     z + 1, 0.0f, 0.0f, // Repeat first vertex for second triangle
-            x + 1, y + 1, z + 1, 1.0f, 1.0f, // Repeat third vertex for second triangle
+            // Back face (侧面纹理)
+            x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
+            x + 1, y,     z + 1, 1.0f, 0.0f, float(textureTypeSide),
+            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
+            x,     y + 1, z + 1, 0.0f, 1.0f, float(textureTypeSide),
+            x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
+            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
 
-            // Left face (6 vertices)
-            x,     y,     z + 1, 0.0f, 0.0f,
-            x,     y,     z,     1.0f, 0.0f,
-            x,     y + 1, z,     1.0f, 1.0f,
-            x,     y + 1, z + 1, 0.0f, 1.0f,
-            x,     y,     z + 1, 0.0f, 0.0f, // Repeat first vertex for second triangle
-            x,     y + 1, z,     1.0f, 1.0f, // Repeat third vertex for second triangle
+            // Left face (侧面纹理)
+            x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
+            x,     y,     z,     1.0f, 0.0f, float(textureTypeSide),
+            x,     y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
+            x,     y + 1, z + 1, 0.0f, 1.0f, float(textureTypeSide),
+            x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
+            x,     y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
 
-            // Right face (6 vertices)
-            x + 1, y,     z,     0.0f, 0.0f,
-            x + 1, y,     z + 1, 1.0f, 0.0f,
-            x + 1, y + 1, z + 1, 1.0f, 1.0f,
-            x + 1, y + 1, z,     0.0f, 1.0f,
-            x + 1, y,     z,     0.0f, 0.0f, // Repeat first vertex for second triangle
-            x + 1, y + 1, z + 1, 1.0f, 1.0f, // Repeat third vertex for second triangle
+            // Right face (侧面纹理)
+            x + 1, y,     z,     0.0f, 0.0f, float(textureTypeSide),
+            x + 1, y,     z + 1, 1.0f, 0.0f, float(textureTypeSide),
+            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
+            x + 1, y + 1, z,     0.0f, 1.0f, float(textureTypeSide),
+            x + 1, y,     z,     0.0f, 0.0f, float(textureTypeSide),
+            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
 
-            // Top face (6 vertices)
-            x,     y + 1, z,     0.0f, 0.0f,
-            x + 1, y + 1, z,     1.0f, 0.0f,
-            x + 1, y + 1, z + 1, 1.0f, 1.0f,
-            x,     y + 1, z + 1, 0.0f, 1.0f,
-            x,     y + 1, z,     0.0f, 0.0f, // Repeat first vertex for second triangle
-            x + 1, y + 1, z + 1, 1.0f, 1.0f, // Repeat third vertex for second triangle
+            // Top face (顶部纹理)
+            x,     y + 1, z,     0.0f, 0.0f, float(textureTypeTop),
+            x + 1, y + 1, z,     1.0f, 0.0f, float(textureTypeTop),
+            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeTop),
+            x,     y + 1, z + 1, 0.0f, 1.0f, float(textureTypeTop),
+            x,     y + 1, z,     0.0f, 0.0f, float(textureTypeTop),
+            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeTop),
 
-            // Bottom face (6 vertices)
-            x,     y,     z,     0.0f, 0.0f,
-            x + 1, y,     z,     1.0f, 0.0f,
-            x + 1, y,     z + 1, 1.0f, 1.0f,
-            x,     y,     z + 1, 0.0f, 1.0f,
-            x,     y,     z,     0.0f, 0.0f, // Repeat first vertex for second triangle
-            x + 1, y,     z + 1, 1.0f, 1.0f, // Repeat third vertex for second triangle
+            // Bottom face (底部纹理)
+            x,     y,     z,     0.0f, 0.0f, float(textureTypeBottom),
+            x + 1, y,     z,     1.0f, 0.0f, float(textureTypeBottom),
+            x + 1, y,     z + 1, 1.0f, 1.0f, float(textureTypeBottom),
+            x,     y,     z + 1, 0.0f, 1.0f, float(textureTypeBottom),
+            x,     y,     z,     0.0f, 0.0f, float(textureTypeBottom),
+            x + 1, y,     z + 1, 1.0f, 1.0f, float(textureTypeBottom),
         };
 
         vertices.insert(vertices.end(), std::begin(cubeVertices), std::end(cubeVertices));
     }
 
 
-
+    
     // 渲染地图
     void render(const glm::mat4& view, const glm::mat4& projection) {
         shader.use();
@@ -238,9 +248,6 @@ int main() {
     const GLubyte* version = glGetString(GL_VERSION);
     std::cout << "OpenGL Version: " << version << std::endl;
 
-    // 启用垂直同步
-    // glfwSwapInterval(1);
-
     // 创建摄像机对象
     Camera camera(glm::vec3(0.0, 0.0, 0.0), -90.0f, 0.0f);
 
@@ -283,7 +290,7 @@ int main() {
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), windowWidth / windowHeight, 0.1f, 100.0f);
 
-        // 绘制地图
+        // 绘制地图        
         world.render(view, projection);
 
         // 绘制 FPS
