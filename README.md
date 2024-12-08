@@ -1,9 +1,12 @@
 ### 环境
- - mingw
+ - Windows
+ - MINGW
+
 ### 方块材质下载
 https://github.com/Faithful-Pack/Default-Java/tree/1.19.3/assets/minecraft/textures/block
 
 ### TODO
- - 添加草方块材质
- - 搞清楚库依赖关系(已知mingw里面有个GL文件夹)
- - 优化编译速度（stb_image, glad, glm）
+ - 优化编译速度（stb_image, glad, glm, ...搞成库链接）
+ - 优化渲染性能（识别热点，视锥裁剪，遮挡剔除...）
+ - 移动逻辑优化（目前帧率低时移动缓慢）
+ 

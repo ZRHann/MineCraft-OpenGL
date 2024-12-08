@@ -16,7 +16,7 @@
 #include <glm/glm.hpp>
 
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
-int worldWidth = 65, worldHeight = 5, worldDepth = 65;  // 地图大小
+int worldWidth = 256, worldHeight = 8, worldDepth = 256;  // 地图大小
 const float PI = acos(-1);
 
 // 错误回调函数
@@ -140,56 +140,55 @@ public:
         TextureType textureTypeSide = TextureType::GRASS_BLOCK_SIDE;
         TextureType textureTypeBottom = TextureType::GRASS_BLOCK_BOTTOM;
 
-
         // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置、纹理坐标和材质信息
         float cubeVertices[] = {
             // Front face (侧面纹理)
             x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
-            x + 1, y,     z,     1.0f, 0.0f, float(textureTypeSide),
-            x + 1, y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
             x,     y + 1, z,     0.0f, 1.0f, float(textureTypeSide),
-            x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
             x + 1, y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
+            x + 1, y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
+            x + 1, y,     z,     1.0f, 0.0f, float(textureTypeSide),
+            x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
 
             // Back face (侧面纹理)
             x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
             x + 1, y,     z + 1, 1.0f, 0.0f, float(textureTypeSide),
             x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
+            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
             x,     y + 1, z + 1, 0.0f, 1.0f, float(textureTypeSide),
             x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
-            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
 
             // Left face (侧面纹理)
             x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
-            x,     y,     z,     1.0f, 0.0f, float(textureTypeSide),
-            x,     y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
             x,     y + 1, z + 1, 0.0f, 1.0f, float(textureTypeSide),
-            x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
             x,     y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
+            x,     y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
+            x,     y,     z,     1.0f, 0.0f, float(textureTypeSide),
+            x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
 
             // Right face (侧面纹理)
             x + 1, y,     z,     0.0f, 0.0f, float(textureTypeSide),
-            x + 1, y,     z + 1, 1.0f, 0.0f, float(textureTypeSide),
-            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
             x + 1, y + 1, z,     0.0f, 1.0f, float(textureTypeSide),
-            x + 1, y,     z,     0.0f, 0.0f, float(textureTypeSide),
             x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
+            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
+            x + 1, y,     z + 1, 1.0f, 0.0f, float(textureTypeSide),
+            x + 1, y,     z,     0.0f, 0.0f, float(textureTypeSide),
 
             // Top face (顶部纹理)
             x,     y + 1, z,     0.0f, 0.0f, float(textureTypeTop),
-            x + 1, y + 1, z,     1.0f, 0.0f, float(textureTypeTop),
-            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeTop),
             x,     y + 1, z + 1, 0.0f, 1.0f, float(textureTypeTop),
-            x,     y + 1, z,     0.0f, 0.0f, float(textureTypeTop),
             x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeTop),
+            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeTop),
+            x + 1, y + 1, z,     1.0f, 0.0f, float(textureTypeTop),
+            x,     y + 1, z,     0.0f, 0.0f, float(textureTypeTop),
 
             // Bottom face (底部纹理)
             x,     y,     z,     0.0f, 0.0f, float(textureTypeBottom),
             x + 1, y,     z,     1.0f, 0.0f, float(textureTypeBottom),
             x + 1, y,     z + 1, 1.0f, 1.0f, float(textureTypeBottom),
+            x + 1, y,     z + 1, 1.0f, 1.0f, float(textureTypeBottom),
             x,     y,     z + 1, 0.0f, 1.0f, float(textureTypeBottom),
             x,     y,     z,     0.0f, 0.0f, float(textureTypeBottom),
-            x + 1, y,     z + 1, 1.0f, 1.0f, float(textureTypeBottom),
         };
 
         vertices.insert(vertices.end(), std::begin(cubeVertices), std::end(cubeVertices));
@@ -249,7 +248,7 @@ int main() {
     std::cout << "OpenGL Version: " << version << std::endl;
 
     // 创建摄像机对象
-    Camera camera(glm::vec3(0.0, 0.0, 0.0), -90.0f, 0.0f);
+    Camera camera(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), -90.0f, 0.0f);
 
     // 创建地图对象
     WorldMap world(worldWidth, worldHeight, worldDepth);
@@ -273,9 +272,8 @@ int main() {
     glViewport(0, 0, width, height);
 
     glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_TEXTURE_2D);
-    // glEnable(GL_CULL_FACE);
-    // glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
     
     // 主循环
     while (!glfwWindowShouldClose(window)) {
