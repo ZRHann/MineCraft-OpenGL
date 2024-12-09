@@ -275,10 +275,11 @@ int main() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     
+    float lastFrameTime = 0.0f;
+    float deltaTime = 0.0f;
+
     // 主循环
     while (!glfwWindowShouldClose(window)) {
-        // 处理键盘输入
-        camera.processKeyboardInput(window);
 
         // 渲染
         glClearColor(0.7f, 0.9f, 1.0f, 1.0f);
@@ -298,7 +299,12 @@ int main() {
         // 交换缓冲区
         glfwSwapBuffers(window);
 
-        // 处理事件
+
+        // 更新摄像机位置
+        deltaTime = glfwGetTime() - lastFrameTime;
+        lastFrameTime = glfwGetTime();
+        camera.updatePosition(deltaTime);  
+        // 处理事件, 如键鼠输入
         glfwPollEvents();
     }
 

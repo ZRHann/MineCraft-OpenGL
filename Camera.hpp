@@ -2,6 +2,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
+#include <iostream>
 class Camera {
 private:
     glm::vec3 position;  // 摄像机位置
@@ -13,12 +14,13 @@ private:
     float yaw;           // 偏航角
     float pitch;         // 俯仰角
 
-    const float movementSpeed = 0.005f;   // 固定移动速度
+    const float movementSpeed = 4.0f;   // 固定移动速度
     const float mouseSensitivity = 0.03f; // 鼠标灵敏度
 
     float lastX, lastY;  // 上一帧鼠标位置
     bool firstMouse;     // 第一次鼠标移动
 
+    bool keys[1024] = { false }; // 用于记录按键状态
 public:
     Camera(glm::vec3 startPosition, float startYaw, float startPitch)
         : position(startPosition), yaw(startYaw), pitch(startPitch), firstMouse(true) {
@@ -40,22 +42,6 @@ public:
     // 获取视图矩阵
     glm::mat4 getViewMatrix() const {
         return glm::lookAt(position, position + front, up);
-    }
-
-    // 处理键盘输入
-    void processKeyboardInput(GLFWwindow* window) {
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            position += front * movementSpeed;
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            position -= front * movementSpeed;
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            position -= right * movementSpeed;
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            position += right * movementSpeed;
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-            position += worldUp * movementSpeed;
-        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-            position -= worldUp * movementSpeed;
     }
 
     // 处理鼠标移动输入
@@ -91,9 +77,52 @@ public:
             camera->processMouseMovement(static_cast<float>(xpos), static_cast<float>(ypos));
     }
 
+    // GLFW 键盘回调函数
+    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+        Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+        if (camera)
+            camera->processKeyInput(key, action);
+    }
+
+    // 处理键盘事件，记录按键状态
+    void processKeyInput(int key, int action) {
+        if (key >= 0 && key < 1024) {
+            if (action == GLFW_PRESS) {
+                keys[key] = true;
+            } else if (action == GLFW_RELEASE) {
+                keys[key] = false;
+            }
+        }
+        // updatePosition();
+    }
+
+    // 更新摄像机位置
+    void updatePosition(float deltaTime) {
+        // std::cout << "w: " << keys[GLFW_KEY_W] << " s: " << keys[GLFW_KEY_S] << " a: " << keys[GLFW_KEY_A] << " d: " << keys[GLFW_KEY_D] << std::endl;
+        if (keys[GLFW_KEY_W]) {
+            position += front * movementSpeed * deltaTime;
+        }
+        if (keys[GLFW_KEY_S]) {
+            position -= front * movementSpeed * deltaTime;
+        }
+        if (keys[GLFW_KEY_A]) {
+            position -= right * movementSpeed * deltaTime;
+        }
+        if (keys[GLFW_KEY_D]) {
+            position += right * movementSpeed * deltaTime;
+        }
+        if (keys[GLFW_KEY_SPACE]) {
+            position += worldUp * movementSpeed * deltaTime;
+        }
+        if (keys[GLFW_KEY_LEFT_SHIFT]) {
+            position -= worldUp * movementSpeed * deltaTime;
+        }
+    }
+
     // 将摄像机绑定到窗口
     void attachToWindow(GLFWwindow* window) {
         glfwSetWindowUserPointer(window, this);
         glfwSetCursorPosCallback(window, mouseCallback);
+        glfwSetKeyCallback(window, keyCallback);
     }
 };
