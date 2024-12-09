@@ -281,7 +281,7 @@ int main() {
         camera.processKeyboardInput(window);
 
         // 渲染
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.7f, 0.9f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // 更新摄像机视角
