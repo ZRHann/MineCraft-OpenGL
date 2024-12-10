@@ -194,18 +194,20 @@ public:
 
     // 检测选中的方块
     bool detectSelectedBlock(const glm::vec3& cameraPos, const glm::vec3& rayDir, glm::vec3& blockHit) {
-        float maxDistance = 100.0f; // 最大检测距离
+        float maxDistance = 7.0f; // 最大检测距离
         float step = 0.1f;          // 每步的移动距离
 
-        glm::vec3 currentPos = cameraPos;
         for (float distance = 0.0f; distance < maxDistance; distance += step) {
-            currentPos += rayDir * step;
+            glm::vec3 currentPos = cameraPos + distance * rayDir;
             int x = static_cast<int>(currentPos.x);
             int y = static_cast<int>(currentPos.y);
             int z = static_cast<int>(currentPos.z);
 
-            if (getBlock(x, y, z) != 0) {
+            if (getBlock(x, y, z) > 0) {
                 blockHit = glm::vec3(x, y, z);
+                std::cout << "Hit distance: " << distance << std::endl;
+                std::cout << "Block hit: " << x << ", " << y << ", " << z << std::endl;
+                std::cout << "Block type: " << getBlock(x, y, z) << std::endl;
                 return true;
             }
         }
