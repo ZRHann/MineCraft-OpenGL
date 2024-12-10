@@ -1,4 +1,4 @@
-#define STB_IMAGE_IMPLEMENTATION
+#pragma once
 #include <unordered_map>
 #include <string>
 #include <glad.h>

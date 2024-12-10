@@ -1,8 +1,12 @@
+#pragma once
+#include "World.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
 #include <iostream>
+
+
 class Camera {
 private:
     glm::vec3 position;  // 摄像机位置
@@ -21,10 +25,15 @@ private:
     bool firstMouse;     // 第一次鼠标移动
 
     bool keys[1024] = { false }; // 用于记录按键状态
+    World& world;
 public:
-    Camera(glm::vec3 startPosition, float startYaw, float startPitch)
-        : position(startPosition), yaw(startYaw), pitch(startPitch), firstMouse(true) {
+    Camera(glm::vec3 startPosition, World& world) 
+        : position(startPosition) 
+        , world(world) {
         worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+        yaw = -90.0f;
+        pitch = 0.0f;
+        firstMouse = true;
         updateCameraVectors();
     }
 
@@ -119,10 +128,30 @@ public:
         }
     }
 
+    // 鼠标回调函数
+    static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+            Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+            camera->handleLeftClick();
+        }
+    }
+
+    // 处理左键点击
+    void handleLeftClick() {
+        glm::vec3 blockHit;
+        if (world.detectSelectedBlock(position, front, blockHit)) {
+            world.deleteBlock(static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z));
+        }
+    }
+
     // 将摄像机绑定到窗口
     void attachToWindow(GLFWwindow* window) {
         glfwSetWindowUserPointer(window, this);
         glfwSetCursorPosCallback(window, mouseCallback);
         glfwSetKeyCallback(window, keyCallback);
+        glfwSetMouseButtonCallback(window, mouseButtonCallback);
     }
+
+
+    
 };

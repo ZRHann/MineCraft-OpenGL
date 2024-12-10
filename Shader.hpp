@@ -1,3 +1,4 @@
+#pragma once
 #include <glad.h>
 #include <GL/gl.h>
 #include <GL/glu.h>

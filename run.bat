@@ -5,6 +5,7 @@ g++ -O2 -g -o minecraft_opengl.exe main.cpp ./requirements/glad/glad.c ^
 -I"./requirements/FastNoiseLite" ^
 -I"./requirements/stb_image" ^
 -I"./requirements/glad" ^
+-DSTB_IMAGE_IMPLEMENTATION ^
 -lglfw3 -lopengl32 -lgdi32 -lglu32
 .\minecraft_opengl.exe
 

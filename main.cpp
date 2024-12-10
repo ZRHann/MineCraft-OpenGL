@@ -1,9 +1,10 @@
+
 #define APIENTRY __stdcall
 #define CALLBACK __stdcall
 #include <glad.h>
 #include "FPSCounter.hpp"
-#include "Camera.hpp"
 #include "World.hpp"
+#include "Camera.hpp"
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -12,7 +13,6 @@
 #include <GL/glu.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
 int worldWidth = 256, worldHeight = 8, worldDepth = 256;  // 地图大小
 const float PI = acos(-1);
@@ -55,12 +55,13 @@ int main() {
     const GLubyte* version = glGetString(GL_VERSION);
     std::cout << "OpenGL Version: " << version << std::endl;
 
-    // 创建摄像机对象
-    Camera camera(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), -90.0f, 0.0f);
-
     // 创建地图对象
     World world(worldWidth, worldHeight, worldDepth);
     world.generatePerlinMap();  // 生成随机地图
+
+    // 创建摄像机对象
+    Camera camera(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), world);
+
 
     // 创建 FPS 计数器 
     FPSCounter fpsCounter;

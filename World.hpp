@@ -1,4 +1,4 @@
-
+#pragma once
 #include "TextureManager.hpp"
 #include "Shader.hpp"
 #include <glm/glm.hpp>
@@ -192,4 +192,30 @@ public:
         glBindVertexArray(0);
     }
 
+    // 检测选中的方块
+    bool detectSelectedBlock(const glm::vec3& cameraPos, const glm::vec3& rayDir, glm::vec3& blockHit) {
+        float maxDistance = 100.0f; // 最大检测距离
+        float step = 0.1f;          // 每步的移动距离
+
+        glm::vec3 currentPos = cameraPos;
+        for (float distance = 0.0f; distance < maxDistance; distance += step) {
+            currentPos += rayDir * step;
+            int x = static_cast<int>(currentPos.x);
+            int y = static_cast<int>(currentPos.y);
+            int z = static_cast<int>(currentPos.z);
+
+            if (getBlock(x, y, z) != 0) {
+                blockHit = glm::vec3(x, y, z);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // 删除方块
+    void deleteBlock(int x, int y, int z) {
+        setBlock(x, y, z, 0); // 设置为空地
+        setupBuffers();       // 重新生成缓冲区
+    }
 };
