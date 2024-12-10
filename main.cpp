@@ -3,7 +3,7 @@
 #include <glad.h>
 #include "FPSCounter.hpp"
 #include "Camera.hpp"
-#include "WorldMap.hpp"
+#include "World.hpp"
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -59,7 +59,7 @@ int main() {
     Camera camera(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), -90.0f, 0.0f);
 
     // 创建地图对象
-    WorldMap world(worldWidth, worldHeight, worldDepth);
+    World world(worldWidth, worldHeight, worldDepth);
     world.generatePerlinMap();  // 生成随机地图
 
     // 创建 FPS 计数器 

@@ -1,9 +1,12 @@
 
 #include "TextureManager.hpp"
 #include "Shader.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <FastNoiseLite.h>
 #include <vector>
-class WorldMap {
+class World {
 public:
     int worldWidth, worldHeight, worldDepth; // 地图的最大尺寸
     TextureManager textureManager; // 纹理管理器
@@ -12,7 +15,7 @@ public:
     GLuint VAO, VBO;  // 用于存储地图顶点的 VAO 和 VBO
     Shader shader;    // 着色器
 
-    WorldMap(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d) {
+    World(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d) {
         map.resize(worldWidth, std::vector<std::vector<int>>(worldHeight, std::vector<int>(worldDepth, 0)));
         shader.createProgram("vertex_shader.glsl", "fragment_shader.glsl");
         textureManager.loadTextureArray();
@@ -23,7 +26,7 @@ public:
         
     }
 
-    ~WorldMap() {
+    ~World() {
         glDeleteVertexArrays(1, &VAO);
         glDeleteBuffers(1, &VBO);
     }
@@ -188,4 +191,5 @@ public:
 
         glBindVertexArray(0);
     }
+
 };
