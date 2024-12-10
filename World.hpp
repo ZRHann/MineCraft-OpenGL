@@ -13,16 +13,16 @@ public:
     std::vector<std::vector<std::vector<int>>> map; // 方块类型的3D数组
 
     GLuint VAO, VBO;  // 用于存储地图顶点的 VAO 和 VBO
-    Shader shader;    // 着色器
+    Shader world_shader;    // 着色器
 
     World(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d) {
         map.resize(worldWidth, std::vector<std::vector<int>>(worldHeight, std::vector<int>(worldDepth, 0)));
-        shader.createProgram("shaders/world.frag", "shaders/world.vert");
+        world_shader.createProgram("shaders/World.frag", "shaders/World.vert");
         textureManager.loadTextureArray();
-        shader.use();
+        world_shader.use();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D_ARRAY, textureManager.getTextureArrayID());
-        shader.setUniform1i("textureArray", 0);
+        world_shader.setUniform1i("textureArray", 0);
         
     }
 
@@ -178,11 +178,11 @@ public:
     
     // 渲染地图
     void render(const glm::mat4& view, const glm::mat4& projection) {
-        shader.use();
+        world_shader.use();
 
         // 设置视图和投影矩阵
-        shader.setUniformMatrix4fv("view", glm::value_ptr(view));
-        shader.setUniformMatrix4fv("projection", glm::value_ptr(projection));
+        world_shader.setUniformMatrix4fv("view", glm::value_ptr(view));
+        world_shader.setUniformMatrix4fv("projection", glm::value_ptr(projection));
 
         glBindVertexArray(VAO);
 

@@ -5,6 +5,7 @@
 #include "FPSCounter.hpp"
 #include "World.hpp"
 #include "Camera.hpp"
+#include "CrossHair.hpp"
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -66,6 +67,8 @@ int main() {
     // 创建 FPS 计数器 
     FPSCounter fpsCounter;
 
+    CrossHair crossHair(windowWidth, windowHeight);
+
     // 启用鼠标捕获和隐藏
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  // 隐藏光标
     glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);  // 设置初始位置（窗口的中心）
@@ -98,8 +101,9 @@ int main() {
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), windowWidth / windowHeight, 0.1f, 100.0f);
 
-        // 绘制地图        
+        // 绘制地图和准心        
         world.render(view, projection);
+        crossHair.render();
 
         // 绘制 FPS
         fpsCounter.update();
