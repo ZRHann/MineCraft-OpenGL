@@ -17,7 +17,7 @@ public:
 
     World(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d) {
         map.resize(worldWidth, std::vector<std::vector<int>>(worldHeight, std::vector<int>(worldDepth, 0)));
-        shader.createProgram("vertex_shader.glsl", "fragment_shader.glsl");
+        shader.createProgram("shaders/world.frag", "shaders/world.vert");
         textureManager.loadTextureArray();
         shader.use();
         glActiveTexture(GL_TEXTURE0);

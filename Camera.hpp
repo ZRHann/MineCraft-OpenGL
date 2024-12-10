@@ -151,7 +151,4 @@ public:
         glfwSetKeyCallback(window, keyCallback);
         glfwSetMouseButtonCallback(window, mouseButtonCallback);
     }
-
-
-    
 };
