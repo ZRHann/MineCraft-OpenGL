@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <string>
 
+// 准心类
 class CrossHair {
 private:
     GLuint VAO, VBO;                // 顶点数组对象和顶点缓冲对象
@@ -67,7 +68,6 @@ public:
         // 使用着色器
         cross_hair_shader.use();
 
-        // 渲染准心
         glBindVertexArray(VAO);
         glDrawArrays(GL_LINES, 0, 4); // 两条线，共 4 个顶点
         glBindVertexArray(0);

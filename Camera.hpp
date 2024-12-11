@@ -18,7 +18,7 @@ private:
     float yaw;           // 偏航角
     float pitch;         // 俯仰角
 
-    const float movementSpeed = 4.0f;   // 固定移动速度
+    const float movementSpeed = 5.0f;   // 固定移动速度
     const float mouseSensitivity = 0.03f; // 鼠标灵敏度
 
     float lastX, lastY;  // 上一帧鼠标位置

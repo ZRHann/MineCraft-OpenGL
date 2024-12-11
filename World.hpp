@@ -6,8 +6,17 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <FastNoiseLite.h>
 #include <vector>
+
+enum BlockType {
+    AIR,
+    GRASS_BLOCK,
+    OAK_LOG,
+    OAK_LEAVES
+};
+
 class World {
 public:
+    const int maxTreeHeight = 7; // 树木最大高度
     int worldWidth, worldHeight, worldDepth; // 地图的最大尺寸
     TextureManager textureManager; // 纹理管理器
     std::vector<std::vector<std::vector<int>>> map; // 方块类型的3D数组
@@ -32,22 +41,22 @@ public:
     }
 
     // 设置某个位置的方块类型
-    void setBlock(int x, int y, int z, int type) {
+    void setBlock(int x, int y, int z, BlockType type) {
         if (x >= 0 && x < worldWidth && y >= 0 && y < worldHeight && z >= 0 && z < worldDepth) {
             map[x][y][z] = type;
         }
     }
 
     // 获取某个位置的方块类型
-    int getBlock(int x, int y, int z) const {
+    BlockType getBlock(int x, int y, int z) const {
         if (x >= 0 && x < worldWidth && y >= 0 && y < worldHeight && z >= 0 && z < worldDepth) {
-            return map[x][y][z];
+            return static_cast<BlockType>(map[x][y][z]);
         }
-        return -1; // 如果越界则返回-1
+        return BlockType::AIR;
     }
 
     // 生成随机地图
-    void generatePerlinMap() {
+    void generateWorldMap() {
         FastNoiseLite noise;
         noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
         noise.SetFrequency(0.04f);  // 设置频率, 越低越平滑
@@ -63,14 +72,21 @@ public:
                 float normalizedNoise = (noiseValue + 1.0f) / 2.0f;
 
                 // 根据映射后的噪声值计算高度
-                int terrainHeight = (int)(normalizedNoise * worldHeight) + 1;  // 缩放到实际高度
-
+                int terrainHeight = (int)(normalizedNoise * (worldHeight - maxTreeHeight - 1)) + 1; // 高度范围 [1, worldHeight - maxTreeHeight]
+                terrainHeight = std::max(terrainHeight, 1);  // 最小高度为1
                 // 设置方块
                 for (int y = 0; y < worldHeight; ++y) {
                     if (y < terrainHeight) {
-                        setBlock(x, y, z, 1);  // 地面方块
+                        setBlock(x, y, z, BlockType::GRASS_BLOCK);  // 地面方块
                     } else {
-                        setBlock(x, y, z, 0);  // 空地
+                        setBlock(x, y, z, BlockType::AIR);  // 空地
+                    }
+                }
+                // 随机生成树木
+                const float treeDensity = 0.0001f;
+                if (terrainHeight > 1 && rand()*rand() % 10000 < treeDensity * 10000) {
+                    if (canPlaceTree(x, z)) {
+                        placeTree(x, terrainHeight, z);
                     }
                 }
             }
@@ -81,14 +97,13 @@ public:
     // 初始化缓冲区
     void setupBuffers() {
         std::vector<float> vertices;
-        int blockType = 2;  //方块类型：1.草 2.原木 3.树叶(但是灰色实体)
 
         // 遍历地图生成所有方块的顶点数据
         for (int x = 0; x < worldWidth; ++x) {
             for (int y = 0; y < worldHeight; ++y) {
                 for (int z = 0; z < worldDepth; ++z) {
-                    if (getBlock(x, y, z) == 1) {
-                        addCubeVertices(vertices, x, y, z, blockType);
+                    if (getBlock(x, y, z) > 0) {
+                        addCubeVertices(vertices, x, y, z, getBlock(x, y, z));
                     }
                 }
             }
@@ -197,7 +212,41 @@ public:
 
         vertices.insert(vertices.end(), std::begin(cubeVertices), std::end(cubeVertices));
     }
-    
+
+    bool canPlaceTree(int x, int z) {
+        int treeSpacing = 5; // 树木间隔
+
+        // 遍历以 (x, z) 为中心的间隔范围
+        for (int dx = -treeSpacing; dx <= treeSpacing; ++dx) {
+            for (int dz = -treeSpacing; dz <= treeSpacing; ++dz) {
+                if (x + dx >= 0 && x + dx < worldWidth && z + dz >= 0 && z + dz < worldDepth) {
+                    // 遍历 y 轴，检查整列是否有树干
+                    for (int y = 0; y < worldHeight; ++y) {
+                        if (getBlock(x + dx, y, z + dz) == BlockType::OAK_LOG || 
+                            getBlock(x + dx, y, z + dz) == BlockType::OAK_LEAVES) { 
+                            return false; // 如果检测到树干或树叶，返回 false
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /*
+        生成树木
+        x, z: 树木的位置
+        baseHeight: 树底的高度
+        树的总高度: 4/5/6/7
+        树干高度为树的总高度 - 1
+    */
+    void placeTree(int x, int baseHeight, int z) {
+        int treeHeight = 4 + rand() % 4; // 树干高度随机在 4 到 7 之间
+        for (int y = baseHeight; y < baseHeight + treeHeight - 1 && y < worldHeight; ++y) {
+            setBlock(x, y, z, BlockType::OAK_LOG); // 树干用类型 2 表示
+        }
+    }
+
     // 渲染地图
     void render(const glm::mat4& view, const glm::mat4& projection) {
         world_shader.use();
@@ -227,9 +276,6 @@ public:
 
             if (getBlock(x, y, z) > 0) {
                 blockHit = glm::vec3(x, y, z);
-                std::cout << "Hit distance: " << distance << std::endl;
-                std::cout << "Block hit: " << x << ", " << y << ", " << z << std::endl;
-                std::cout << "Block type: " << getBlock(x, y, z) << std::endl;
                 return true;
             }
         }
@@ -239,7 +285,7 @@ public:
 
     // 删除方块
     void deleteBlock(int x, int y, int z) {
-        setBlock(x, y, z, 0); // 设置为空地
+        setBlock(x, y, z, BlockType::AIR); // 设置为空地
         setupBuffers();       // 重新生成缓冲区
     }
 };

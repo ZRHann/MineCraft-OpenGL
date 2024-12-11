@@ -15,7 +15,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
-int worldWidth = 256, worldHeight = 8, worldDepth = 256;  // 地图大小
+int worldWidth = 256, worldHeight = 18, worldDepth = 256;  // 地图大小
 const float PI = acos(-1);
 
 // 错误回调函数
@@ -25,7 +25,6 @@ void error_callback(int error, const char* description) {
 
 // 主循环
 int main() {
-    srand(time(nullptr));  // 设置随机种子
     // 初始化 GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW!" << std::endl;
@@ -58,7 +57,8 @@ int main() {
 
     // 创建地图对象
     World world(worldWidth, worldHeight, worldDepth);
-    world.generatePerlinMap();  // 生成随机地图
+    world.generateWorldMap();  // 生成随机地图
+    std::cout << "World generated!" << std::endl;
 
     // 创建摄像机对象
     Camera camera(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), world);
