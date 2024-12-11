@@ -14,10 +14,17 @@ enum BlockType {
     OAK_LEAVES
 };
 
+// 32位随机数生成器
+int rand32() {
+    return rand() << 16 | rand();
+}
+
+
 class World {
 public:
     const int maxTreeHeight = 7; // 树木最大高度
     int worldWidth, worldHeight, worldDepth; // 地图的最大尺寸
+    int worldSeed; // 地图种子
     TextureManager textureManager; // 纹理管理器
     std::vector<std::vector<std::vector<int>>> map; // 方块类型的3D数组
 
@@ -26,6 +33,8 @@ public:
 
     World(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d) {
         map.resize(worldWidth, std::vector<std::vector<int>>(worldHeight, std::vector<int>(worldDepth, 0)));
+
+        // 初始化着色器、纹理
         world_shader.createProgram("shaders/World.frag", "shaders/World.vert");
         textureManager.loadTextureArray();
         world_shader.use();
@@ -33,6 +42,10 @@ public:
         glBindTexture(GL_TEXTURE_2D_ARRAY, textureManager.getTextureArrayID());
         world_shader.setUniform1i("textureArray", 0);
         
+        srand(time(nullptr));
+        worldSeed = rand32();
+        srand(worldSeed);
+        std::cout << "World Seed: " << worldSeed << std::endl;
     }
 
     ~World() {
@@ -60,9 +73,8 @@ public:
         FastNoiseLite noise;
         noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
         noise.SetFrequency(0.04f);  // 设置频率, 越低越平滑
-        int seed = rand()*rand();
-        std::cout << "World Seed: " << seed << std::endl;
-        noise.SetSeed(seed);  // 设置种子
+        int perlinSeed = rand32();
+        noise.SetSeed(perlinSeed);  // 设置种子
 
         for (int x = 0; x < worldWidth; ++x) {
             for (int z = 0; z < worldDepth; ++z) {
@@ -83,8 +95,8 @@ public:
                     }
                 }
                 // 随机生成树木
-                const float treeDensity = 0.0001f;
-                if (terrainHeight > 1 && rand()*rand() % 10000 < treeDensity * 10000) {
+                const float treeDensity = 0.001f;
+                if (terrainHeight > 1 && rand32() % 10000 < treeDensity * 10000) {
                     if (canPlaceTree(x, z)) {
                         placeTree(x, terrainHeight, z);
                     }
