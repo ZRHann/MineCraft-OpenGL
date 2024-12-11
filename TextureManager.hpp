@@ -9,6 +9,9 @@ enum TextureType {
     GRASS_BLOCK_TOP,
     GRASS_BLOCK_SIDE,
     GRASS_BLOCK_BOTTOM,
+    OAK_LOG_TOP,
+    OAK_LOG_SIDE,
+    OAK_LOG_LEAVES,
     TEXTURE_COUNT
 };
 
@@ -18,7 +21,10 @@ public:
     std::vector<std::string> texture_imgs = {
         "assets/grass_block_top.png",
         "assets/grass_block_side.png",
-        "assets/grass_block_bottom.png"
+        "assets/grass_block_bottom.png",
+        "assets/oak_log_top.png",
+        "assets/oak_log_side.png",
+        "assets/oak_leaves.png"
     };
 
     TextureManager() : textureArrayID(0) {}

@@ -81,13 +81,14 @@ public:
     // 初始化缓冲区
     void setupBuffers() {
         std::vector<float> vertices;
+        int blockType = 2;  //方块类型：1.草 2.原木 3.树叶(但是灰色实体)
 
         // 遍历地图生成所有方块的顶点数据
         for (int x = 0; x < worldWidth; ++x) {
             for (int y = 0; y < worldHeight; ++y) {
                 for (int z = 0; z < worldDepth; ++z) {
                     if (getBlock(x, y, z) == 1) {
-                        addCubeVertices(vertices, x, y, z);
+                        addCubeVertices(vertices, x, y, z, blockType);
                     }
                 }
             }
@@ -117,10 +118,31 @@ public:
         glBindVertexArray(0);
     }
 
-    void addCubeVertices(std::vector<float>& vertices, float x, float y, float z) {
-        TextureType textureTypeTop = TextureType::GRASS_BLOCK_TOP;
-        TextureType textureTypeSide = TextureType::GRASS_BLOCK_SIDE;
-        TextureType textureTypeBottom = TextureType::GRASS_BLOCK_BOTTOM;
+    void addCubeVertices(std::vector<float>& vertices, float x, float y, float z, int blockType) {
+        TextureType textureTypeTop;
+        TextureType textureTypeSide; 
+        TextureType textureTypeBottom; 
+
+        // 草方块
+        if (blockType == 1){
+            textureTypeTop = TextureType::GRASS_BLOCK_TOP;
+            textureTypeSide = TextureType::GRASS_BLOCK_SIDE;
+            textureTypeBottom = TextureType::GRASS_BLOCK_BOTTOM;
+        }
+
+        // 原木方块
+        if (blockType == 2){
+            textureTypeTop = TextureType::OAK_LOG_TOP;
+            textureTypeSide = TextureType::OAK_LOG_SIDE;
+            textureTypeBottom = TextureType::OAK_LOG_TOP;
+        }
+
+        // 树叶
+        if (blockType == 3){
+            textureTypeTop = TextureType::OAK_LOG_LEAVES;
+            textureTypeSide = TextureType::OAK_LOG_LEAVES;
+            textureTypeBottom = TextureType::OAK_LOG_LEAVES;
+        }
 
         // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置、纹理坐标和材质信息
         float cubeVertices[] = {
