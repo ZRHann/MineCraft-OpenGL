@@ -12,4 +12,9 @@ void main() {
         discard; // 丢弃片元
     }
     FragColor = texture(textureArray, vec3(TexCoord, float(TextureType))); // 访问纹理数组
+
+    // 支持透明
+    if (FragColor.a < 0.01) {
+        discard;
+    }
 }

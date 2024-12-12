@@ -44,6 +44,10 @@ void initOpenGLSettings() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
+    // 透明混合
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     // MSAA 设置
     glEnable(GL_MULTISAMPLE); // 启用多重采样
     glSampleCoverage(1.0f, GL_FALSE); // 确保采样覆盖率为 100%
@@ -116,11 +120,6 @@ int main() {
 
     // 设置鼠标回调函数
     camera.attachToWindow(window);
-
-
-    
-    
-    
     
     float lastFrameTime = 0.0f;
     float deltaTime = 0.0f;

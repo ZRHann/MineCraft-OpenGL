@@ -94,9 +94,6 @@ public:
                 for (int y = 0; y < worldHeight; ++y) {
                     if (y < terrainHeight) {
                         setBlock(x, y, z, BlockType::GRASS_BLOCK);  // 地面方块
-                    } 
-                    else if (getBlock(x, y, z) != BlockType::OAK_LEAVES){
-                        setBlock(x, y, z, BlockType::BLOCK_AIR);  // 空地
                     }
                 }
                 // 随机生成树木
@@ -258,7 +255,7 @@ public:
         树干高度为树的总高度 - 1
     */
     void placeTree(int x, int baseHeight, int z) {
-        int treeHeight = 4 + rand() % 4; // 树高度随机在 4 到 7 之间
+        int treeHeight = 5 + rand() % 3; // 树高度随机在 5 到 7 之间
         for (int y = baseHeight; y < baseHeight + treeHeight - 1 && y < worldHeight-1; ++y) {
             setBlock(x, y, z, BlockType::OAK_LOG); // 树干用类型 2 表示
         }
@@ -277,7 +274,7 @@ public:
                     }
                 }
                 
-                // 中层
+                // 2层
                 else if (y == baseHeight + treeHeight - 2){
                     for (int dx = x - 1; dx <= x + 1; dx++){
                         for(int dz= z - 1; dz <= z + 1; dz++){
@@ -289,7 +286,7 @@ public:
                     }
                 }
 
-                // 下层
+                // 34层
                 else if (y < baseHeight + treeHeight - 2){
                     for (int dx = x - 2; dx <= x + 2; dx++){
                         for(int dz= z - 2; dz <= z + 2; dz++){
@@ -301,7 +298,7 @@ public:
                 }
             }
         }
-        else{
+        else if (treeHeight == 5) { 
             for (int y = baseHeight + treeHeight -1; y > baseHeight && y> baseHeight + treeHeight - 4 && y < worldHeight; y--){
                 // 顶层树叶 
                 if (y == baseHeight + treeHeight - 1){
@@ -314,10 +311,10 @@ public:
                     }
                 }
                 
-                // 中层
+                // 23层
                 else if (y <= baseHeight + treeHeight - 2){
-                    for (int dx = x - 1; dx <= x + 1; dx++){
-                        for(int dz= z - 1; dz <= z + 1; dz++){
+                    for (int dx = x - 2; dx <= x + 2; dx++){
+                        for(int dz= z - 2; dz <= z + 2; dz++){
                             // 躲避树干
                             if (dx != x || dz != z){
                                 setBlock(dx, y, dz, BlockType::OAK_LEAVES);
@@ -327,7 +324,6 @@ public:
                 }
             }
         }
-        
     }
 
     // 渲染地图
