@@ -25,7 +25,7 @@ public:
         "assets/grass_block_bottom.png",
         "assets/oak_log_top.png",
         "assets/oak_log_side.png",
-        "assets/oak_leaves.png"
+        "assets/azalea_leaves.png"
     };
 
     TextureManager() : textureArrayID(0) {}
@@ -51,7 +51,7 @@ public:
         }
 
         // 分配纹理数组内存
-        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, width, height, texture_imgs.size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, width, height, texture_imgs.size() + 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
         // 第0层填充空纹理
         unsigned char emptyTexture[16 * 16 * 4] = {0}; 
