@@ -14,6 +14,8 @@
 #include <GL/glu.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+const int MSAA_LEVEL = 4;      // 可选值: 0, 1, 2, 4, 8, 16 (默认: 0, 禁用 MSAA)
+const float ANISO_LEVEL = 4.0; // 可选值: 1.0, 2.0, 4.0, 8.0, 16.0 (默认: 1.0, 禁用各向异性过滤)
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
 int worldWidth = 256, worldHeight = 18, worldDepth = 256;  // 地图大小
 const float PI = acos(-1);
@@ -35,6 +37,27 @@ void printGraphicsInfo() {
     std::cout << "GLSL Version: " << shadingLanguageVersion << std::endl;
 }
 
+void initOpenGLSettings() {
+    // 深度测试
+    glEnable(GL_DEPTH_TEST);
+
+    // 背面剔除
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    
+    // MSAA 设置
+    glEnable(GL_MULTISAMPLE); // 启用多重采样
+    glSampleCoverage(1.0f, GL_FALSE); // 确保采样覆盖率为 100%
+    std::cout << "MSAA enabled with samples: " << MSAA_LEVEL << std::endl;
+
+    // 各向异性过滤设置
+    GLfloat maxAniso = 0.0f;
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAniso); // 查询硬件支持的最大各向异性值
+    GLfloat anisoLevel = (ANISO_LEVEL > maxAniso) ? maxAniso : ANISO_LEVEL;
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, anisoLevel); // 设置各向异性过滤等级
+    std::cout << "Anisotropic filtering enabled with level: " << anisoLevel << std::endl;
+}
+
 // 主循环
 int main() {
     // 初始化 GLFW
@@ -45,6 +68,9 @@ int main() {
     
     // 设置错误回调函数
     glfwSetErrorCallback(error_callback);
+
+    // 设置 MSAA 级别
+    glfwWindowHint(GLFW_SAMPLES, MSAA_LEVEL); 
 
     // 创建窗口
     GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "MineCraft_OpenGL", nullptr, nullptr);
@@ -91,12 +117,12 @@ int main() {
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
-    // 设置视口和投影
+    // 设置视口
     glViewport(0, 0, width, height);
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    // 初始化 OpenGL 设置
+    initOpenGLSettings();
+    
     
     float lastFrameTime = 0.0f;
     float deltaTime = 0.0f;
