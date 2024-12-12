@@ -23,6 +23,18 @@ void error_callback(int error, const char* description) {
     std::cerr << "Error: " << description << std::endl;
 }
 
+void printGraphicsInfo() {
+    const GLubyte* vendor = glGetString(GL_VENDOR); // 显卡厂商
+    const GLubyte* renderer = glGetString(GL_RENDERER); // 显卡渲染器
+    const GLubyte* version = glGetString(GL_VERSION); // OpenGL版本
+    const GLubyte* shadingLanguageVersion = glGetString(GL_SHADING_LANGUAGE_VERSION); // GLSL版本
+
+    std::cout << "Graphics Vendor: " << vendor << std::endl;
+    std::cout << "Graphics Renderer: " << renderer << std::endl;
+    std::cout << "OpenGL Version: " << version << std::endl;
+    std::cout << "GLSL Version: " << shadingLanguageVersion << std::endl;
+}
+
 // 主循环
 int main() {
     // 初始化 GLFW
@@ -51,9 +63,8 @@ int main() {
         return -1;
     }
 
-    // 打印 OpenGL 版本
-    const GLubyte* version = glGetString(GL_VERSION);
-    std::cout << "OpenGL Version: " << version << std::endl;
+    // 打印显卡信息
+    printGraphicsInfo();
 
     // 创建地图对象
     World world(worldWidth, worldHeight, worldDepth);
