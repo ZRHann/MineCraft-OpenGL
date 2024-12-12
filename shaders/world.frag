@@ -1,18 +1,15 @@
 #version 460 core
 
-layout(location = 0) in vec3 aPos;
-layout(location = 1) in vec2 aTexCoord;
-layout(location = 2) in float textureType;
+in vec2 TexCoord;
+flat in int TextureType;
 
-out vec2 TexCoord;
-flat out int TextureType;
+out vec4 FragColor;
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+uniform sampler2DArray textureArray; // 使用纹理数组
 
 void main() {
-    gl_Position = projection * view * vec4(aPos, 1.0);
-    TexCoord = aTexCoord;
-    TextureType = int(textureType);
+    if (TextureType == 0) {
+        discard; // 丢弃片元
+    }
+    FragColor = texture(textureArray, vec3(TexCoord, float(TextureType))); // 访问纹理数组
 }

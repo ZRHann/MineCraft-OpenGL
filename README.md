@@ -1,3 +1,6 @@
+### 硬件
+ - NVIDIA GeForce RTX 4060 Laptop
+
 ### 环境
  - Windows
  - MINGW
