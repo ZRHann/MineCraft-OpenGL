@@ -8,7 +8,7 @@
 #include <vector>
 
 enum BlockType {
-    AIR,
+    BLOCK_AIR,
     GRASS_BLOCK,
     OAK_LOG,
     OAK_LEAVES
@@ -22,6 +22,9 @@ int rand32() {
 
 class World {
 public:
+    const int vertexCountPerBlock = 36;
+    const int attributesPerVertex = 6;
+    const int blockStride = vertexCountPerBlock * attributesPerVertex;
     const int maxTreeHeight = 7; // 树木最大高度
     int worldWidth, worldHeight, worldDepth; // 地图的最大尺寸
     int worldSeed; // 地图种子
@@ -34,8 +37,9 @@ public:
     World(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d) {
         map.resize(worldWidth, std::vector<std::vector<int>>(worldHeight, std::vector<int>(worldDepth, 0)));
 
+
         // 初始化着色器、纹理
-        world_shader.createProgram("shaders/World.frag", "shaders/World.vert");
+        world_shader.createProgram("shaders/World.vert", "shaders/World.frag");
         textureManager.loadTextureArray();
         world_shader.use();
         glActiveTexture(GL_TEXTURE0);
@@ -65,7 +69,7 @@ public:
         if (x >= 0 && x < worldWidth && y >= 0 && y < worldHeight && z >= 0 && z < worldDepth) {
             return static_cast<BlockType>(map[x][y][z]);
         }
-        return BlockType::AIR;
+        return BlockType::BLOCK_AIR;
     }
 
     // 生成随机地图
@@ -91,7 +95,7 @@ public:
                     if (y < terrainHeight) {
                         setBlock(x, y, z, BlockType::GRASS_BLOCK);  // 地面方块
                     } else {
-                        setBlock(x, y, z, BlockType::AIR);  // 空地
+                        setBlock(x, y, z, BlockType::BLOCK_AIR);  // 空地
                     }
                 }
                 // 随机生成树木
@@ -106,7 +110,7 @@ public:
         setupBuffers();
     }
 
-    // 初始化缓冲区
+    // 初始化VAO VBO缓冲区
     void setupBuffers() {
         std::vector<float> vertices;
 
@@ -114,9 +118,8 @@ public:
         for (int x = 0; x < worldWidth; ++x) {
             for (int y = 0; y < worldHeight; ++y) {
                 for (int z = 0; z < worldDepth; ++z) {
-                    if (getBlock(x, y, z) > 0) {
-                        addCubeVertices(vertices, x, y, z, getBlock(x, y, z));
-                    }
+                    std::vector<float> cubeVertices = getCubeVertices(x, y, z, getBlock(x, y, z));
+                    vertices.insert(vertices.end(), cubeVertices.begin(), cubeVertices.end());
                 }
             }
         }
@@ -145,34 +148,36 @@ public:
         glBindVertexArray(0);
     }
 
-    void addCubeVertices(std::vector<float>& vertices, float x, float y, float z, int blockType) {
+    std::vector<float> getCubeVertices(float x, float y, float z, int blockType) {
+        std::vector<float> cubeVertices(blockStride);
+
         TextureType textureTypeTop;
         TextureType textureTypeSide; 
         TextureType textureTypeBottom; 
 
-        // 草方块
-        if (blockType == 1){
+        if (blockType == BlockType::BLOCK_AIR) {
+            textureTypeTop = TextureType::TEXTURE_AIR;
+            textureTypeSide = TextureType::TEXTURE_AIR;
+            textureTypeBottom = TextureType::TEXTURE_AIR;
+        }
+        if (blockType == BlockType::GRASS_BLOCK) { // 草方块
             textureTypeTop = TextureType::GRASS_BLOCK_TOP;
             textureTypeSide = TextureType::GRASS_BLOCK_SIDE;
             textureTypeBottom = TextureType::GRASS_BLOCK_BOTTOM;
         }
-
-        // 原木方块
-        if (blockType == 2){
+        else if (blockType == BlockType::OAK_LOG){ // 原木方块
             textureTypeTop = TextureType::OAK_LOG_TOP;
             textureTypeSide = TextureType::OAK_LOG_SIDE;
             textureTypeBottom = TextureType::OAK_LOG_TOP;
         }
-
-        // 树叶
-        if (blockType == 3){
+        else if (blockType == BlockType::OAK_LEAVES) { // 树叶方块
             textureTypeTop = TextureType::OAK_LOG_LEAVES;
             textureTypeSide = TextureType::OAK_LOG_LEAVES;
             textureTypeBottom = TextureType::OAK_LOG_LEAVES;
         }
 
         // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置、纹理坐标和材质信息
-        float cubeVertices[] = {
+        cubeVertices = {
             // Front face (侧面纹理)
             x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
             x,     y + 1, z,     0.0f, 1.0f, float(textureTypeSide),
@@ -221,8 +226,7 @@ public:
             x,     y,     z + 1, 0.0f, 1.0f, float(textureTypeBottom),
             x,     y,     z,     0.0f, 0.0f, float(textureTypeBottom),
         };
-
-        vertices.insert(vertices.end(), std::begin(cubeVertices), std::end(cubeVertices));
+        return cubeVertices;
     }
 
     bool canPlaceTree(int x, int z) {
@@ -270,7 +274,7 @@ public:
         glBindVertexArray(VAO);
 
         // 使用三角形模式绘制
-        glDrawArrays(GL_TRIANGLES, 0, 36*worldWidth*worldHeight*worldDepth); // 每个方块有6个顶点，改为36个顶点
+        glDrawArrays(GL_TRIANGLES, 0, 36*worldWidth*worldHeight*worldDepth); // 每个方块有6*6=36个顶点
 
         glBindVertexArray(0);
     }
@@ -295,9 +299,16 @@ public:
         return false;
     }
 
-    // 删除方块
-    void deleteBlock(int x, int y, int z) {
-        setBlock(x, y, z, BlockType::AIR); // 设置为空地
-        setupBuffers();       // 重新生成缓冲区
+    void updateBlock(int x, int y, int z, BlockType type) {
+        setBlock(x, y, z, type); // 设置为空地
+        std::vector<float> blockVertices = getCubeVertices(x, y, z, type);
+
+        int blockIndex = x * worldHeight * worldDepth + y * worldDepth + z; // 方块索引
+        int offset = blockIndex * blockStride * sizeof(float); // 偏移字节数
+        
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferSubData(GL_ARRAY_BUFFER, offset, blockVertices.size() * sizeof(float), blockVertices.data());
+        glBindVertexArray(0);
     }
 };

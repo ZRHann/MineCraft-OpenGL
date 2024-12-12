@@ -140,7 +140,7 @@ public:
     void handleLeftClick() {
         glm::vec3 blockHit;
         if (world.detectSelectedBlock(position, front, blockHit)) {
-            world.deleteBlock(static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z));
+            world.updateBlock(static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z), BlockType::BLOCK_AIR);
         }
     }
 

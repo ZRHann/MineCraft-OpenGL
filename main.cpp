@@ -18,7 +18,6 @@ const int MSAA_LEVEL = 4;      // 可选值: 0, 1, 2, 4, 8, 16 (默认: 0, 禁�
 const float ANISO_LEVEL = 4.0; // 可选值: 1.0, 2.0, 4.0, 8.0, 16.0 (默认: 1.0, 禁用各向异性过滤)
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
 int worldWidth = 256, worldHeight = 18, worldDepth = 256;  // 地图大小
-const float PI = acos(-1);
 
 // 错误回调函数
 void error_callback(int error, const char* description) {
@@ -44,7 +43,7 @@ void initOpenGLSettings() {
     // 背面剔除
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    
+
     // MSAA 设置
     glEnable(GL_MULTISAMPLE); // 启用多重采样
     glSampleCoverage(1.0f, GL_FALSE); // 确保采样覆盖率为 100%
@@ -92,6 +91,11 @@ int main() {
     // 打印显卡信息
     printGraphicsInfo();
 
+    // 设置视口
+    glViewport(0, 0, windowWidth, windowHeight);
+    // 初始化 OpenGL 设置
+    initOpenGLSettings();
+
     // 创建地图对象
     World world(worldWidth, worldHeight, worldDepth);
     world.generateWorldMap();  // 生成随机地图
@@ -113,15 +117,9 @@ int main() {
     // 设置鼠标回调函数
     camera.attachToWindow(window);
 
-    // 获取窗口大小
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
 
-    // 设置视口
-    glViewport(0, 0, width, height);
-
-    // 初始化 OpenGL 设置
-    initOpenGLSettings();
+    
+    
     
     
     float lastFrameTime = 0.0f;
@@ -130,7 +128,7 @@ int main() {
     // 主循环
     while (!glfwWindowShouldClose(window)) {
 
-        // 渲染
+        // 清空颜色缓冲和深度缓冲
         glClearColor(0.7f, 0.9f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 enum TextureType {
+    TEXTURE_AIR, 
     GRASS_BLOCK_TOP,
     GRASS_BLOCK_SIDE,
     GRASS_BLOCK_BOTTOM,
@@ -52,12 +53,16 @@ public:
         // 分配纹理数组内存
         glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, width, height, texture_imgs.size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
+        // 第0层填充空纹理
+        unsigned char emptyTexture[16 * 16 * 4] = {0}; 
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, emptyTexture); 
+
         // 加载所有纹理
         for (size_t i = 0; i < texture_imgs.size(); ++i) {
             stbi_set_flip_vertically_on_load(true);
             data = stbi_load(texture_imgs[i].c_str(), &width, &height, &nrChannels, 4); // 强制加载为RGBA
             if (data) {
-                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i + 1, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
                 stbi_image_free(data);
             } else {
                 std::cerr << "ERROR: Failed to load texture: " << texture_imgs[i] << std::endl;
