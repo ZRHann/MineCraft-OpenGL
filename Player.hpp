@@ -13,12 +13,14 @@ private:
     glm::vec3 front;     // 摄像机前方向
     glm::vec3 up;        // 摄像机上方向
     glm::vec3 right;     // 摄像机右方向
-    glm::vec3 worldUp;   // 世界上方向
-
+    glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);   // 世界上方向
+    glm::vec3 velocity = glm::vec3(0.0f);  // 玩家速度
+    const glm::vec3 gravity = glm::vec3(0.0f, -32.0f, 0.0f); // 重力加速度
+    const float movementSpeed = 7.0f;  // 水平移动速度
+    const float resistanceFactor  = 0.98f; // 空气阻力
     float yaw;           // 偏航角
     float pitch;         // 俯仰角
 
-    const float movementSpeed = 5.0f;   // 固定移动速度
     const float mouseSensitivity = 0.03f; // 鼠标灵敏度
 
     float lastX, lastY;  // 上一帧鼠标位置
@@ -33,7 +35,6 @@ public:
         , world(world) 
         , windowWidth(width)
         , windowHeight(height) {
-        worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
         yaw = -90.0f;
         pitch = 0.0f;
         lastX = width / 2;
@@ -105,81 +106,68 @@ public:
 
     // 更新摄像机位置
     void updatePosition(float deltaTime) {
-        glm::vec3 nextPosition = position;
-
-        // 根据按键计算方向向量
+        
+        // 计算潜在的方向
         glm::vec3 direction(0.0f);
-
-        // WASD 无视 Y 轴
         glm::vec3 horizontalFront = glm::normalize(glm::vec3(front.x, 0.0f, front.z));
         glm::vec3 horizontalRight = glm::normalize(glm::vec3(right.x, 0.0f, right.z));
 
-        if (keys[GLFW_KEY_W]) {
-            direction += horizontalFront;
-        }
-        if (keys[GLFW_KEY_S]) {
-            direction -= horizontalFront;
-        }
-        if (keys[GLFW_KEY_A]) {
-            direction -= horizontalRight;
-        }
-        if (keys[GLFW_KEY_D]) {
-            direction += horizontalRight;
-        }
-        if (keys[GLFW_KEY_SPACE]) {
-            direction += worldUp;
-        }
-        if (keys[GLFW_KEY_LEFT_SHIFT]) {
-            direction -= worldUp;
+        if (keys[GLFW_KEY_W]) direction += horizontalFront;
+        if (keys[GLFW_KEY_S]) direction -= horizontalFront;
+        if (keys[GLFW_KEY_A]) direction -= horizontalRight;
+        if (keys[GLFW_KEY_D]) direction += horizontalRight;
+
+        // 如果有方向输入，更新水平速度
+        if (glm::length(direction) > 0.0f) {
+            direction = glm::normalize(direction);
+            velocity.x = direction.x * movementSpeed;
+            velocity.z = direction.z * movementSpeed;
+        } else {
+            velocity.x = 0.0f;
+            velocity.z = 0.0f;
         }
 
-        // 没有按键按下, 不移动
-        if (!glm::length(direction)) {
-            return;
-        }
-        
-        // 归一化方向向量
-        direction = glm::normalize(direction);
-        
+        // 垂直速度更新（重力&阻力影响）
+        velocity.y = (velocity.y + gravity.y * deltaTime) * resistanceFactor;
 
-        // 计算潜在的新位置
-        glm::vec3 potentialPosition = position + direction * movementSpeed * deltaTime;
+        // 基于速度计算潜在的新位置
+        glm::vec3 potentialPosition = position + velocity * deltaTime;
 
-        // 分量碰撞检测
-        glm::vec3 minBound, maxBound;
+        // 逐方向碰撞检测
+        glm::vec3 nextPosition = position;
 
-        // 人物碰撞体积: (0.6, 1.8, 0.6)
-        // 摄像机高度: 1.62
-
-        // 检测 X 分量
+        // X方向
         nextPosition.x = potentialPosition.x;
-        minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
-        maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
+        glm::vec3 minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
+        glm::vec3 maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
         if (world.isColliding(minBound, maxBound)) {
-            nextPosition.x = position.x; // 碰撞时保持原 X 坐标
+            nextPosition.x = position.x; // 恢复原位置
+            velocity.x = 0.0f;           // 停止X方向速度
         }
 
-        // 检测 Z 分量
+        // Z方向
         nextPosition.z = potentialPosition.z;
         minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
         maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
         if (world.isColliding(minBound, maxBound)) {
-            nextPosition.z = position.z; // 碰撞时保持原 Z 坐标
+            nextPosition.z = position.z; // 恢复原位置
+            velocity.z = 0.0f;           // 停止Z方向速度
         }
 
-        // 检测 Y 分量
+        // Y方向
         nextPosition.y = potentialPosition.y;
         minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
         maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
         if (world.isColliding(minBound, maxBound)) {
-            nextPosition.y = position.y; // 碰撞时保持原 Y 坐标
+            if (velocity.y < 0.0f) { // 如果正在下降
+                velocity.y = 0.0f;  // 停止Y方向速度
+            }
+            nextPosition.y = position.y; // 恢复原位置
         }
 
-        // 更新位置
+        // 更新最终位置
         position = nextPosition;
     }
-
-
 
     // 鼠标回调函数
     static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {

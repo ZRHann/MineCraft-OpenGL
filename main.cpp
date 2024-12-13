@@ -120,12 +120,11 @@ int main() {
     Player player(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), world, windowWidth, windowHeight);
     player.attachToWindow(window);
     
-    float lastFrameTime = 0.0f;
+    float lastFrameTime = glfwGetTime();
     float deltaTime = 0.0f;
 
     // 主循环
     while (!glfwWindowShouldClose(window)) {
-
         // 清空颜色缓冲和深度缓冲
         glClearColor(0.7f, 0.9f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
