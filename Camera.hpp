@@ -22,18 +22,22 @@ private:
     const float mouseSensitivity = 0.03f; // 鼠标灵敏度
 
     float lastX, lastY;  // 上一帧鼠标位置
-    bool firstMouse;     // 第一次鼠标移动
 
     bool keys[1024] = { false }; // 用于记录按键状态
     World& world;
+
+    const int windowWidth, windowHeight;
 public:
-    Camera(glm::vec3 startPosition, World& world) 
+    Camera(glm::vec3 startPosition, World& world, int width, int height) 
         : position(startPosition) 
-        , world(world) {
+        , world(world) 
+        , windowWidth(width)
+        , windowHeight(height) {
         worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
         yaw = -90.0f;
         pitch = 0.0f;
-        firstMouse = true;
+        lastX = width / 2;
+        lastY = height / 2;
         updateCameraVectors();
     }
 
@@ -55,12 +59,6 @@ public:
 
     // 处理鼠标移动输入
     void processMouseMovement(float xpos, float ypos) {
-        if (firstMouse) {
-            lastX = xpos;
-            lastY = ypos;
-            firstMouse = false;
-        }
-
         float xOffset = xpos - lastX;
         float yOffset = lastY - ypos; // 反转y坐标
         lastX = xpos;

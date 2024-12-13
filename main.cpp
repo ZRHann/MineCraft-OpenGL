@@ -14,8 +14,8 @@
 #include <GL/glu.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-const int MSAA_LEVEL = 4;      // 可选值: 0, 1, 2, 4, 8, 16 (默认: 0, 禁用 MSAA)
-const float ANISO_LEVEL = 4.0; // 可选值: 1.0, 2.0, 4.0, 8.0, 16.0 (默认: 1.0, 禁用各向异性过滤)
+const int MSAA_LEVEL = 16;      // 可选值: 0, 1, 2, 4, 8, 16 (默认: 0, 禁用 MSAA)
+const float ANISO_LEVEL = 16.0; // 可选值: 1.0, 2.0, 4.0, 8.0, 16.0 (默认: 1.0, 禁用各向异性过滤)
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
 int worldWidth = 256, worldHeight = 18, worldDepth = 256;  // 地图大小
 
@@ -105,8 +105,7 @@ int main() {
     world.generateWorldMap();  // 生成随机地图
     std::cout << "World generated!" << std::endl;
 
-    // 创建摄像机对象
-    Camera camera(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), world);
+    
 
 
     // 创建 FPS 计数器 
@@ -114,11 +113,11 @@ int main() {
 
     CrossHair crossHair(windowWidth, windowHeight);
 
-    // 启用鼠标捕获和隐藏
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  // 隐藏光标
     glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);  // 设置初始位置（窗口的中心）
 
-    // 设置鼠标回调函数
+    // 创建摄像机对象, 设置鼠标回调函数
+    Camera camera(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), world, windowWidth, windowHeight);
     camera.attachToWindow(window);
     
     float lastFrameTime = 0.0f;
@@ -145,7 +144,6 @@ int main() {
 
         // 交换缓冲区
         glfwSwapBuffers(window);
-
 
         // 更新摄像机位置
         deltaTime = glfwGetTime() - lastFrameTime;

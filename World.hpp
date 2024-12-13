@@ -46,6 +46,7 @@ public:
         glBindTexture(GL_TEXTURE_2D_ARRAY, textureManager.getTextureArrayID());
         world_shader.setUniform1i("textureArray", 0);
         
+        // 生成随机种子
         srand(time(nullptr));
         worldSeed = rand32();
         srand(worldSeed);
@@ -90,7 +91,7 @@ public:
                 // 根据映射后的噪声值计算高度
                 int terrainHeight = (int)(normalizedNoise * (worldHeight - maxTreeHeight - 1)) + 1; // 高度范围 [1, worldHeight - maxTreeHeight]
                 terrainHeight = std::max(terrainHeight, 1);  // 最小高度为1
-                // 设置方块
+                // 设置草方块
                 for (int y = 0; y < worldHeight; ++y) {
                     if (y < terrainHeight) {
                         setBlock(x, y, z, BlockType::GRASS_BLOCK);  // 地面方块
@@ -153,7 +154,7 @@ public:
         TextureType textureTypeSide; 
         TextureType textureTypeBottom; 
 
-        if (blockType == BlockType::BLOCK_AIR) {
+        if (blockType == BlockType::BLOCK_AIR) { // 空气方块
             textureTypeTop = TextureType::TEXTURE_AIR;
             textureTypeSide = TextureType::TEXTURE_AIR;
             textureTypeBottom = TextureType::TEXTURE_AIR;
@@ -163,7 +164,7 @@ public:
             textureTypeSide = TextureType::GRASS_BLOCK_SIDE;
             textureTypeBottom = TextureType::GRASS_BLOCK_BOTTOM;
         }
-        else if (blockType == BlockType::OAK_LOG){ // 原木方块
+        else if (blockType == BlockType::OAK_LOG){ // 圆木方块
             textureTypeTop = TextureType::OAK_LOG_TOP;
             textureTypeSide = TextureType::OAK_LOG_SIDE;
             textureTypeBottom = TextureType::OAK_LOG_TOP;
@@ -174,7 +175,7 @@ public:
             textureTypeBottom = TextureType::OAK_LOG_LEAVES;
         }
 
-        // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置、纹理坐标和材质信息
+        // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置(0-2)、纹理坐标(3-4)和材质信息(5)
         cubeVertices = {
             // Front face (侧面纹理)
             x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
@@ -251,7 +252,7 @@ public:
         生成树木
         x, z: 树木的位置
         baseHeight: 树底的高度
-        树的总高度: 4/5/6/7
+        树的总高度: 5/6/7
         树干高度为树的总高度 - 1
     */
     void placeTree(int x, int baseHeight, int z) {
@@ -260,7 +261,6 @@ public:
             setBlock(x, y, z, BlockType::OAK_LOG); // 树干用类型 2 表示
         }
 
-        //树叶最大宽度 5*5，根据生成树干规则，不会超出world范围
         if (treeHeight >=6){
             for (int y = baseHeight + treeHeight -1; y > baseHeight && y> baseHeight + treeHeight - 5 && y < worldHeight; y--){
                 // 顶层树叶 
@@ -273,7 +273,6 @@ public:
                         }
                     }
                 }
-                
                 // 2层
                 else if (y == baseHeight + treeHeight - 2){
                     for (int dx = x - 1; dx <= x + 1; dx++){
@@ -285,7 +284,6 @@ public:
                         }
                     }
                 }
-
                 // 34层
                 else if (y < baseHeight + treeHeight - 2){
                     for (int dx = x - 2; dx <= x + 2; dx++){
@@ -310,7 +308,6 @@ public:
                         }
                     }
                 }
-                
                 // 23层
                 else if (y <= baseHeight + treeHeight - 2){
                     for (int dx = x - 2; dx <= x + 2; dx++){
@@ -343,6 +340,7 @@ public:
     }
 
     // 检测选中的方块
+    // blockHit: 返回选中的方块的位置
     bool detectSelectedBlock(const glm::vec3& cameraPos, const glm::vec3& rayDir, glm::vec3& blockHit) {
         float maxDistance = 7.0f; // 最大检测距离
         float step = 0.1f;          // 每步的移动距离
@@ -358,7 +356,6 @@ public:
                 return true;
             }
         }
-
         return false;
     }
 
