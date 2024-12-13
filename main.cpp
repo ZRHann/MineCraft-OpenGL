@@ -4,7 +4,7 @@
 #include <glad.h>
 #include "FPSCounter.hpp"
 #include "World.hpp"
-#include "Camera.hpp"
+#include "Player.hpp"
 #include "CrossHair.hpp"
 #include <iostream>
 #include <cmath>
@@ -117,8 +117,8 @@ int main() {
     glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);  // 设置初始位置（窗口的中心）
 
     // 创建摄像机对象, 设置鼠标回调函数
-    Camera camera(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), world, windowWidth, windowHeight);
-    camera.attachToWindow(window);
+    Player player(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), world, windowWidth, windowHeight);
+    player.attachToWindow(window);
     
     float lastFrameTime = 0.0f;
     float deltaTime = 0.0f;
@@ -131,7 +131,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // 更新摄像机视角
-        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 view = player.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), windowWidth / windowHeight, 0.1f, 100.0f);
 
         // 绘制地图和准心        
@@ -148,7 +148,7 @@ int main() {
         // 更新摄像机位置
         deltaTime = glfwGetTime() - lastFrameTime;
         lastFrameTime = glfwGetTime();
-        camera.updatePosition(deltaTime);  
+        player.updatePosition(deltaTime);  
         // 处理事件, 如键鼠输入
         glfwPollEvents();
     }

@@ -341,12 +341,12 @@ public:
 
     // 检测选中的方块
     // blockHit: 返回选中的方块的位置
-    bool detectSelectedBlock(const glm::vec3& cameraPos, const glm::vec3& rayDir, glm::vec3& blockHit) {
+    bool detectSelectedBlock(const glm::vec3& playerPos, const glm::vec3& rayDir, glm::vec3& blockHit) {
         float maxDistance = 7.0f; // 最大检测距离
         float step = 0.1f;          // 每步的移动距离
 
         for (float distance = 0.0f; distance < maxDistance; distance += step) {
-            glm::vec3 currentPos = cameraPos + distance * rayDir;
+            glm::vec3 currentPos = playerPos + distance * rayDir;
             int x = static_cast<int>(currentPos.x);
             int y = static_cast<int>(currentPos.y);
             int z = static_cast<int>(currentPos.z);

@@ -7,7 +7,7 @@
 #include <iostream>
 
 
-class Camera {
+class Player {
 private:
     glm::vec3 position;  // 摄像机位置
     glm::vec3 front;     // 摄像机前方向
@@ -28,7 +28,7 @@ private:
 
     const int windowWidth, windowHeight;
 public:
-    Camera(glm::vec3 startPosition, World& world, int width, int height) 
+    Player(glm::vec3 startPosition, World& world, int width, int height) 
         : position(startPosition) 
         , world(world) 
         , windowWidth(width)
@@ -38,11 +38,11 @@ public:
         pitch = 0.0f;
         lastX = width / 2;
         lastY = height / 2;
-        updateCameraVectors();
+        updatePlayerVectors();
     }
 
     // 更新摄像机的前、右、上方向向量
-    void updateCameraVectors() {
+    void updatePlayerVectors() {
         glm::vec3 newFront;
         newFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         newFront.y = sin(glm::radians(pitch));
@@ -74,21 +74,21 @@ public:
         if (pitch > 89.0f) pitch = 89.0f;
         if (pitch < -89.0f) pitch = -89.0f;
 
-        updateCameraVectors();
+        updatePlayerVectors();
     }
 
     // 鼠标回调函数（供GLFW调用）
     static void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
-        Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
-        if (camera)
-            camera->processMouseMovement(static_cast<float>(xpos), static_cast<float>(ypos));
+        Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
+        if (player)
+            player->processMouseMovement(static_cast<float>(xpos), static_cast<float>(ypos));
     }
 
     // GLFW 键盘回调函数
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-        Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
-        if (camera)
-            camera->processKeyInput(key, action);
+        Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
+        if (player)
+            player->processKeyInput(key, action);
     }
 
     // 处理键盘事件，记录按键状态
@@ -184,8 +184,8 @@ public:
     // 鼠标回调函数
     static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-            Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
-            camera->handleLeftClick();
+            Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
+            player->handleLeftClick();
         }
     }
 
