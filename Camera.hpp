@@ -148,29 +148,29 @@ public:
         // 分量碰撞检测
         glm::vec3 minBound, maxBound;
 
-        // 人物碰撞体积: (0.98, 1.8, 0.98)
+        // 人物碰撞体积: (0.6, 1.8, 0.6)
         // 摄像机高度: 1.62
 
         // 检测 X 分量
         nextPosition.x = potentialPosition.x;
-        minBound = nextPosition - glm::vec3(0.49f, 1.62f, 0.49f);
-        maxBound = nextPosition + glm::vec3(0.49f, 0.18f, 0.49f);
+        minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
+        maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
         if (world.isColliding(minBound, maxBound)) {
             nextPosition.x = position.x; // 碰撞时保持原 X 坐标
         }
 
         // 检测 Z 分量
         nextPosition.z = potentialPosition.z;
-        minBound = nextPosition - glm::vec3(0.49f, 1.62f, 0.49f);
-        maxBound = nextPosition + glm::vec3(0.49f, 0.18f, 0.49f);
+        minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
+        maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
         if (world.isColliding(minBound, maxBound)) {
             nextPosition.z = position.z; // 碰撞时保持原 Z 坐标
         }
 
         // 检测 Y 分量
         nextPosition.y = potentialPosition.y;
-        minBound = nextPosition - glm::vec3(0.49f, 1.62f, 0.49f);
-        maxBound = nextPosition + glm::vec3(0.49f, 0.18f, 0.49f);
+        minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
+        maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
         if (world.isColliding(minBound, maxBound)) {
             nextPosition.y = position.y; // 碰撞时保持原 Y 坐标
         }
