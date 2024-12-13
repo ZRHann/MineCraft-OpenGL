@@ -371,4 +371,63 @@ public:
         glBufferSubData(GL_ARRAY_BUFFER, offset, blockVertices.size() * sizeof(float), blockVertices.data());
         glBindVertexArray(0);
     }
+
+    // 检测两个三维坐标形成的体积是否与方块碰撞
+    bool isColliding(const glm::vec3& minBound, const glm::vec3& maxBound) {
+        // 步进大小
+        const float step = 0.5f;
+        const float eps = 0.0001f; // 阈值，避免检测非常小的范围
+
+        // 遍历检测碰撞范围内的点
+        if (maxBound.x - minBound.x > eps) {
+            for (float x = minBound.x; x < maxBound.x; x += step) {
+                for (float y = minBound.y; y < maxBound.y; y += step) {
+                    for (float z = minBound.z; z < maxBound.z; z += step) {
+                        int blockX = static_cast<int>(std::floor(x));
+                        int blockY = static_cast<int>(std::floor(y));
+                        int blockZ = static_cast<int>(std::floor(z));
+
+                        if (getBlock(blockX, blockY, blockZ) != BlockType::BLOCK_AIR) {
+                            return true; // 如果有非空气方块，发生碰撞
+                        }
+                    }
+                }
+            }
+        }
+
+        // maxBound.y 检查顶部边缘
+        if (maxBound.y - minBound.y > eps) {
+            for (float x = minBound.x; x <= maxBound.x; x += step) {
+                for (float z = minBound.z; z <= maxBound.z; z += step) {
+                    if (getBlock(static_cast<int>(std::floor(x)), static_cast<int>(std::floor(maxBound.y)), static_cast<int>(std::floor(z))) != BlockType::BLOCK_AIR) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // maxBound.z 检查深度方向的边缘
+        if (maxBound.z - minBound.z > eps) {
+            for (float x = minBound.x; x <= maxBound.x; x += step) {
+                for (float y = minBound.y; y <= maxBound.y; y += step) {
+                    if (getBlock(static_cast<int>(std::floor(x)), static_cast<int>(std::floor(y)), static_cast<int>(std::floor(maxBound.z))) != BlockType::BLOCK_AIR) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // maxBound.x 检查宽度方向的边缘
+        if (maxBound.x - minBound.x > eps) {
+            for (float y = minBound.y; y <= maxBound.y; y += step) {
+                for (float z = minBound.z; z <= maxBound.z; z += step) {
+                    if (getBlock(static_cast<int>(std::floor(maxBound.x)), static_cast<int>(std::floor(y)), static_cast<int>(std::floor(z))) != BlockType::BLOCK_AIR) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false; // 无碰撞
+    }
 };
