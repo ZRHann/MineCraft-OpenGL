@@ -375,7 +375,7 @@ public:
     // 检测两个三维坐标形成的体积是否与方块碰撞
     bool isColliding(const glm::vec3& minBound, const glm::vec3& maxBound) {
         // 步进大小
-        const float step = 0.5f;
+        const float step = 0.3f;
         const float eps = 0.0001f; // 阈值，避免检测非常小的范围
 
         // 遍历检测碰撞范围内的点

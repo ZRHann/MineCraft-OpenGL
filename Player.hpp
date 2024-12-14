@@ -18,6 +18,7 @@ private:
     const glm::vec3 gravity = glm::vec3(0.0f, -32.0f, 0.0f); // 重力加速度
     const float movementSpeed = 7.0f;  // 水平移动速度
     const float resistanceFactor  = 0.98f; // 空气阻力
+    const float jumpSpeed = 11.0f; // 起跳速度(最大跳跃高度约1.25)
     float yaw;           // 偏航角
     float pitch;         // 俯仰角
 
@@ -104,9 +105,41 @@ public:
         // updatePosition();
     }
 
+    // 脚底y为整数 && 脚底有方块 && 垂直速度为0 -> true
+    bool isOnGround() {
+        const float eps = 0.01f;      // 精度
+        // 脚底范围
+        glm::vec3 minBound = position + glm::vec3(-0.3f, -1.62f, -0.3f);
+        glm::vec3 maxBound = position + glm::vec3(0.3f, -1.62f, 0.3f);
+        // 检查脚底y坐标是否接近整数
+        if (std::abs(minBound.y - std::round(minBound.y)) > eps) {
+            return false; 
+        }
+        
+        // 获取四个角的坐标
+        std::vector<glm::vec3> corners = {
+            glm::vec3(minBound.x, minBound.y, minBound.z),
+            glm::vec3(maxBound.x, minBound.y, minBound.z),
+            glm::vec3(minBound.x, minBound.y, maxBound.z),
+            glm::vec3(maxBound.x, minBound.y, maxBound.z)
+        };
+
+        // 检查四个角是否有方块支撑
+        for (const auto& corner : corners) {
+            int blockX = static_cast<int>(std::floor(corner.x));
+            int blockY = static_cast<int>(std::round(corner.y)) - 1; 
+            int blockZ = static_cast<int>(std::floor(corner.z));
+            if (world.getBlock(blockX, blockY, blockZ) != BlockType::BLOCK_AIR) { // 脚下有方块
+                return std::abs(velocity.y) < eps; // 检查垂直速度是否为0
+            }
+        }
+
+        return false;
+    }
+
+
     // 更新摄像机位置
     void updatePosition(float deltaTime) {
-        
         // 计算潜在的方向
         glm::vec3 direction(0.0f);
         glm::vec3 horizontalFront = glm::normalize(glm::vec3(front.x, 0.0f, front.z));
@@ -116,6 +149,9 @@ public:
         if (keys[GLFW_KEY_S]) direction -= horizontalFront;
         if (keys[GLFW_KEY_A]) direction -= horizontalRight;
         if (keys[GLFW_KEY_D]) direction += horizontalRight;
+        if (keys[GLFW_KEY_SPACE] && isOnGround()) {
+            velocity.y = jumpSpeed; // 初始化向上的速度
+        }
 
         // 如果有方向输入，更新水平速度
         if (glm::length(direction) > 0.0f) {
@@ -167,6 +203,8 @@ public:
 
         // 更新最终位置
         position = nextPosition;
+        // std::cout << "velocity: " << velocity.x << " " << velocity.y << " " << velocity.z << std::endl;
+        // std::cout << "position: " << position.x << " " << position.y << " " << position.z << std::endl;
     }
 
     // 鼠标回调函数
