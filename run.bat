@@ -8,6 +8,3 @@ g++ -O2 -g -o minecraft_opengl.exe main.cpp ./requirements/glad/glad.c ^
 -DSTB_IMAGE_IMPLEMENTATION ^
 -lglfw3 -lopengl32 -lgdi32 -lglu32
 .\minecraft_opengl.exe
-
-@REM -I"D:/softwares/glew-2.2.0-win32/glew-2.2.0/include" ^
-@REM -L"D:/softwares/glew-2.2.0-win32/glew-2.2.0/lib/Release/x64" ^

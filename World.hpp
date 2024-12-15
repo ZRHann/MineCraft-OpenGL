@@ -46,6 +46,7 @@ public:
         glBindTexture(GL_TEXTURE_2D_ARRAY, textureManager.getTextureArrayID());
         world_shader.setUniform1i("textureArray", 0);
         
+        // 生成随机种子
         srand(time(nullptr));
         worldSeed = rand32();
         srand(worldSeed);
@@ -90,13 +91,10 @@ public:
                 // 根据映射后的噪声值计算高度
                 int terrainHeight = (int)(normalizedNoise * (worldHeight - maxTreeHeight - 1)) + 1; // 高度范围 [1, worldHeight - maxTreeHeight]
                 terrainHeight = std::max(terrainHeight, 1);  // 最小高度为1
-                // 设置方块
+                // 设置草方块
                 for (int y = 0; y < worldHeight; ++y) {
                     if (y < terrainHeight) {
                         setBlock(x, y, z, BlockType::GRASS_BLOCK);  // 地面方块
-                    } 
-                    else if (getBlock(x, y, z) != BlockType::OAK_LEAVES){
-                        setBlock(x, y, z, BlockType::BLOCK_AIR);  // 空地
                     }
                 }
                 // 随机生成树木
@@ -156,7 +154,7 @@ public:
         TextureType textureTypeSide; 
         TextureType textureTypeBottom; 
 
-        if (blockType == BlockType::BLOCK_AIR) {
+        if (blockType == BlockType::BLOCK_AIR) { // 空气方块
             textureTypeTop = TextureType::TEXTURE_AIR;
             textureTypeSide = TextureType::TEXTURE_AIR;
             textureTypeBottom = TextureType::TEXTURE_AIR;
@@ -166,7 +164,7 @@ public:
             textureTypeSide = TextureType::GRASS_BLOCK_SIDE;
             textureTypeBottom = TextureType::GRASS_BLOCK_BOTTOM;
         }
-        else if (blockType == BlockType::OAK_LOG){ // 原木方块
+        else if (blockType == BlockType::OAK_LOG){ // 圆木方块
             textureTypeTop = TextureType::OAK_LOG_TOP;
             textureTypeSide = TextureType::OAK_LOG_SIDE;
             textureTypeBottom = TextureType::OAK_LOG_TOP;
@@ -177,7 +175,7 @@ public:
             textureTypeBottom = TextureType::OAK_LOG_LEAVES;
         }
 
-        // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置、纹理坐标和材质信息
+        // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置(0-2)、纹理坐标(3-4)和材质信息(5)
         cubeVertices = {
             // Front face (侧面纹理)
             x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
@@ -254,16 +252,15 @@ public:
         生成树木
         x, z: 树木的位置
         baseHeight: 树底的高度
-        树的总高度: 4/5/6/7
+        树的总高度: 5/6/7
         树干高度为树的总高度 - 1
     */
     void placeTree(int x, int baseHeight, int z) {
-        int treeHeight = 4 + rand() % 4; // 树高度随机在 4 到 7 之间
+        int treeHeight = 5 + rand() % 3; // 树高度随机在 5 到 7 之间
         for (int y = baseHeight; y < baseHeight + treeHeight - 1 && y < worldHeight-1; ++y) {
             setBlock(x, y, z, BlockType::OAK_LOG); // 树干用类型 2 表示
         }
 
-        //树叶最大宽度 5*5，根据生成树干规则，不会超出world范围
         if (treeHeight >=6){
             for (int y = baseHeight + treeHeight -1; y > baseHeight && y> baseHeight + treeHeight - 5 && y < worldHeight; y--){
                 // 顶层树叶 
@@ -276,8 +273,7 @@ public:
                         }
                     }
                 }
-                
-                // 中层
+                // 2层
                 else if (y == baseHeight + treeHeight - 2){
                     for (int dx = x - 1; dx <= x + 1; dx++){
                         for(int dz= z - 1; dz <= z + 1; dz++){
@@ -288,8 +284,7 @@ public:
                         }
                     }
                 }
-
-                // 下层
+                // 34层
                 else if (y < baseHeight + treeHeight - 2){
                     for (int dx = x - 2; dx <= x + 2; dx++){
                         for(int dz= z - 2; dz <= z + 2; dz++){
@@ -301,7 +296,7 @@ public:
                 }
             }
         }
-        else{
+        else if (treeHeight == 5) { 
             for (int y = baseHeight + treeHeight -1; y > baseHeight && y> baseHeight + treeHeight - 4 && y < worldHeight; y--){
                 // 顶层树叶 
                 if (y == baseHeight + treeHeight - 1){
@@ -313,11 +308,10 @@ public:
                         }
                     }
                 }
-                
-                // 中层
+                // 23层
                 else if (y <= baseHeight + treeHeight - 2){
-                    for (int dx = x - 1; dx <= x + 1; dx++){
-                        for(int dz= z - 1; dz <= z + 1; dz++){
+                    for (int dx = x - 2; dx <= x + 2; dx++){
+                        for(int dz= z - 2; dz <= z + 2; dz++){
                             // 躲避树干
                             if (dx != x || dz != z){
                                 setBlock(dx, y, dz, BlockType::OAK_LEAVES);
@@ -327,7 +321,6 @@ public:
                 }
             }
         }
-        
     }
 
     // 渲染地图
@@ -347,12 +340,13 @@ public:
     }
 
     // 检测选中的方块
-    bool detectSelectedBlock(const glm::vec3& cameraPos, const glm::vec3& rayDir, glm::vec3& blockHit) {
+    // blockHit: 返回选中的方块的位置
+    bool detectSelectedBlock(const glm::vec3& playerPos, const glm::vec3& rayDir, glm::vec3& blockHit) {
         float maxDistance = 7.0f; // 最大检测距离
         float step = 0.1f;          // 每步的移动距离
 
         for (float distance = 0.0f; distance < maxDistance; distance += step) {
-            glm::vec3 currentPos = cameraPos + distance * rayDir;
+            glm::vec3 currentPos = playerPos + distance * rayDir;
             int x = static_cast<int>(currentPos.x);
             int y = static_cast<int>(currentPos.y);
             int z = static_cast<int>(currentPos.z);
@@ -362,7 +356,6 @@ public:
                 return true;
             }
         }
-
         return false;
     }
 
@@ -377,5 +370,64 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferSubData(GL_ARRAY_BUFFER, offset, blockVertices.size() * sizeof(float), blockVertices.data());
         glBindVertexArray(0);
+    }
+
+    // 检测两个三维坐标形成的体积是否与方块碰撞
+    bool isColliding(const glm::vec3& minBound, const glm::vec3& maxBound) {
+        // 步进大小
+        const float step = 0.3f;
+        const float eps = 0.0001f; // 阈值，避免检测非常小的范围
+
+        // 遍历检测碰撞范围内的点
+        if (maxBound.x - minBound.x > eps) {
+            for (float x = minBound.x; x < maxBound.x; x += step) {
+                for (float y = minBound.y; y < maxBound.y; y += step) {
+                    for (float z = minBound.z; z < maxBound.z; z += step) {
+                        int blockX = static_cast<int>(std::floor(x));
+                        int blockY = static_cast<int>(std::floor(y));
+                        int blockZ = static_cast<int>(std::floor(z));
+
+                        if (getBlock(blockX, blockY, blockZ) != BlockType::BLOCK_AIR) {
+                            return true; // 如果有非空气方块，发生碰撞
+                        }
+                    }
+                }
+            }
+        }
+
+        // maxBound.y 检查顶部边缘
+        if (maxBound.y - minBound.y > eps) {
+            for (float x = minBound.x; x <= maxBound.x; x += step) {
+                for (float z = minBound.z; z <= maxBound.z; z += step) {
+                    if (getBlock(static_cast<int>(std::floor(x)), static_cast<int>(std::floor(maxBound.y)), static_cast<int>(std::floor(z))) != BlockType::BLOCK_AIR) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // maxBound.z 检查深度方向的边缘
+        if (maxBound.z - minBound.z > eps) {
+            for (float x = minBound.x; x <= maxBound.x; x += step) {
+                for (float y = minBound.y; y <= maxBound.y; y += step) {
+                    if (getBlock(static_cast<int>(std::floor(x)), static_cast<int>(std::floor(y)), static_cast<int>(std::floor(maxBound.z))) != BlockType::BLOCK_AIR) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // maxBound.x 检查宽度方向的边缘
+        if (maxBound.x - minBound.x > eps) {
+            for (float y = minBound.y; y <= maxBound.y; y += step) {
+                for (float z = minBound.z; z <= maxBound.z; z += step) {
+                    if (getBlock(static_cast<int>(std::floor(maxBound.x)), static_cast<int>(std::floor(y)), static_cast<int>(std::floor(z))) != BlockType::BLOCK_AIR) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false; // 无碰撞
     }
 };
