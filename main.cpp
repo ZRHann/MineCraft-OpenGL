@@ -150,6 +150,8 @@ int main() {
         player.updatePosition(deltaTime);  
         // 处理事件, 如键鼠输入
         glfwPollEvents();
+        // 切换放置的方块
+        player.switchBlockInHand();
     }
 
     // 清理和退出
