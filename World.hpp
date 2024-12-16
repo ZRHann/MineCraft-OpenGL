@@ -1,6 +1,7 @@
 #pragma once
 #include "TextureManager.hpp"
 #include "Shader.hpp"
+#include "GeometryShader.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -35,7 +36,7 @@ public:
     Shader world_shader;    // 着色器
 
     GLuint wireframeVAO, wireframeVBO; // 用于存储线框顶点的 VAO 和 VBO
-    Shader wireframe_shader; // 线框着色器
+    GeometryShader wireframe_shader; // 线框着色器
 
     World(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d) {
         map.resize(worldWidth, std::vector<std::vector<int>>(worldHeight, std::vector<int>(worldDepth, 0)));
@@ -56,7 +57,7 @@ public:
         std::cout << "World Seed: " << worldSeed << std::endl;
 
         // 初始化线框着色器
-        wireframe_shader.createProgram("shaders/Wireframe.vert", "shaders/Wireframe.frag");
+        wireframe_shader.createProgram("shaders/Wireframe.vert", "shaders/Wireframe.frag","shaders/Wireframe.geom");
 
         // 初始化线框缓冲区
         setupWireframeBuffers();
@@ -549,6 +550,7 @@ public:
         wireframe_shader.setUniformMatrix4fv("model", glm::value_ptr(model));
         wireframe_shader.setUniformMatrix4fv("view", glm::value_ptr(view));
         wireframe_shader.setUniformMatrix4fv("projection", glm::value_ptr(projection));
+        wireframe_shader.setUniform1f("lineWidth", 0.055f); // 设置线宽
 
         glBindVertexArray(wireframeVAO);
         glDrawArrays(GL_LINES, 0, 48); // 12 条线 * 2 个顶点 = 24 个点*2组=48
