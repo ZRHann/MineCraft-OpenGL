@@ -359,6 +359,29 @@ public:
         return false;
     }
 
+    // 寻找放置方块的位置(选中的非空白方块 前的最后一个 空白方块)
+    bool findLastAirBlock(const glm::vec3& playerPos, const glm::vec3& rayDir, glm::vec3& blockHit) {
+        float maxDistance = 7.0f; // 最大检测距离
+        float step = 0.1f;          // 每步的移动距离
+
+        for (float distance = 0.0f; distance < maxDistance; distance += step) {
+            glm::vec3 currentPos = playerPos + distance * rayDir;
+            int x = static_cast<int>(currentPos.x);
+            int y = static_cast<int>(currentPos.y);
+            int z = static_cast<int>(currentPos.z);
+
+            if (getBlock(x, y, z) > 0) {
+                currentPos = currentPos - step * rayDir;
+                x = static_cast<int>(currentPos.x);
+                y = static_cast<int>(currentPos.y);
+                z = static_cast<int>(currentPos.z);
+                blockHit = glm::vec3(x, y, z);
+                return true;
+            }
+        }
+        return false;
+    }
+
     void updateBlock(int x, int y, int z, BlockType type) {
         setBlock(x, y, z, type); // 设置为空地
         std::vector<float> blockVertices = getCubeVertices(x, y, z, type);

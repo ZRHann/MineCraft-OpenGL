@@ -30,6 +30,8 @@ private:
     World& world;
 
     const int windowWidth, windowHeight;
+
+    BlockType blockInHand;
 public:
     Player(glm::vec3 startPosition, World& world, int width, int height) 
         : position(startPosition) 
@@ -41,6 +43,7 @@ public:
         lastX = width / 2;
         lastY = height / 2;
         updatePlayerVectors();
+        blockInHand = BLOCK_AIR;
     }
 
     // 更新摄像机的前、右、上方向向量
@@ -207,11 +210,23 @@ public:
         // std::cout << "position: " << position.x << " " << position.y << " " << position.z << std::endl;
     }
 
+    // 切换手中方块
+    void switchBlockInHand(){
+        if (keys[GLFW_KEY_0]) blockInHand = BLOCK_AIR;
+        if (keys[GLFW_KEY_1]) blockInHand = GRASS_BLOCK;
+        if (keys[GLFW_KEY_2]) blockInHand = OAK_LOG;
+        if (keys[GLFW_KEY_3]) blockInHand = OAK_LEAVES;
+    }
+
     // 鼠标回调函数
     static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
             Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
             player->handleLeftClick();
+        }
+        else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+            Player* player = static_cast<Player*>(glfwGetWindowUserPointer(window));
+            player->handRightClick();
         }
     }
 
@@ -220,6 +235,26 @@ public:
         glm::vec3 blockHit;
         if (world.detectSelectedBlock(position, front, blockHit)) {
             world.updateBlock(static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z), BlockType::BLOCK_AIR);
+        }
+    }
+
+    // 处理右键点击
+    void handRightClick() {
+        glm::vec3 blockHit;
+        if (world.findLastAirBlock(position, front, blockHit)){
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-1.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-1.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-1.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-1.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-0.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-0.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-0.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-0.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y+0.18f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y+0.18f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y+0.18f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
+            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y+0.18f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
+            world.updateBlock(static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z), blockInHand);
         }
     }
 
