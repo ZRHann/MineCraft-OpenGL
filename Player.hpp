@@ -242,19 +242,11 @@ public:
     void handRightClick() {
         glm::vec3 blockHit;
         if (world.findLastAirBlock(position, front, blockHit)){
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-1.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-1.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-1.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-1.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-0.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-0.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-0.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y-0.62f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y+0.18f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x-0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y+0.18f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y+0.18f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z+0.3f)){return; }
-            if (static_cast<int>(blockHit.x) == static_cast<int>(position.x+0.3f) && static_cast<int>(blockHit.y) == static_cast<int>(position.y+0.18f) && static_cast<int>(blockHit.z) == static_cast<int>(position.z-0.3f)){return; }
-            world.updateBlock(static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z), blockInHand);
+            glm::vec3 playerBlockPos = glm::floor(position - glm::vec3(0.0f, 1.62f, 0.0f));// 获取玩家脚底所在的方块
+            if (blockHit != playerBlockPos && blockHit != playerBlockPos + glm::vec3(0, 1, 0))
+            {
+                world.updateBlock(static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z), blockInHand);
+            }
         }
     }
 
@@ -264,5 +256,15 @@ public:
         glfwSetCursorPosCallback(window, mouseCallback);
         glfwSetKeyCallback(window, keyCallback);
         glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    }
+
+    // 获取摄像机位置
+    glm::vec3 getCameraPosition() const {
+        return position;
+    }
+
+    // 获取摄像机前方向（光线方向）
+    glm::vec3 getRayDirection() const {
+        return front;
     }
 };
