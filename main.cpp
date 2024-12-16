@@ -123,6 +123,7 @@ int main() {
     float lastFrameTime = glfwGetTime();
     float deltaTime = 0.0f;
 
+    glm::vec3 selectedBlock(0.0f); // 存储选中的方块位置
     // 主循环
     while (!glfwWindowShouldClose(window)) {
         // 清空颜色缓冲和深度缓冲
@@ -136,6 +137,16 @@ int main() {
         // 绘制地图和准心        
         world.render(view, projection);
         crossHair.render();
+
+        // 获取摄像机位置和光线方向
+        glm::vec3 cameraPos = player.getCameraPosition();
+        glm::vec3 rayDir = player.getRayDirection();
+
+        // 检测选中的方块
+        if (world.detectSelectedBlock(cameraPos, rayDir, selectedBlock)) {
+            // 绘制线框
+            world.renderWireframe(view, projection, selectedBlock);
+        }
 
         // 绘制 FPS
         fpsCounter.update();
