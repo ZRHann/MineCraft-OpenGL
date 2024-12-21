@@ -6,6 +6,7 @@
 #include "World.hpp"
 #include "Player.hpp"
 #include "CrossHair.hpp"
+#include "Skybox.hpp"
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -112,6 +113,7 @@ int main() {
     FPSCounter fpsCounter;
 
     CrossHair crossHair(windowWidth, windowHeight);
+    Skybox skybox; 
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  // 隐藏光标
     glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);  // 设置初始位置（窗口的中心）
@@ -151,6 +153,9 @@ int main() {
         // 绘制 FPS
         fpsCounter.update();
         fpsCounter.drawFPS(window);
+
+        skybox.update(deltaTime);
+        skybox.render(view, projection);
 
         // 交换缓冲区
         glfwSwapBuffers(window);
