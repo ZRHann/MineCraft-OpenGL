@@ -24,9 +24,9 @@ private:
 
     // 飞行参数
     bool isFlying = false;                    // 是否处于飞行状态
-    float lastShiftPressTime = 0.0f;         // 上一次按下 Shift 键的时间
+    float lastSpacePressTime = 0.0f;         // 上一次按下 Space 键的时间
     const float doubleClickTime = 0.3f;      // 双击判定时间间隔（秒）
-    bool lastShiftState = false;             // 上一帧 Shift 键的状态
+    bool lastSpaceState = false;             // 上一帧 Space 键的状态
 
     const float mouseSensitivity = 0.03f; // 鼠标灵敏度
 
@@ -150,19 +150,19 @@ public:
     // 更新摄像机位置
     void updatePosition(float deltaTime) {
     // 检测双击 Shift
-    bool currentShiftState = keys[GLFW_KEY_LEFT_SHIFT] || keys[GLFW_KEY_RIGHT_SHIFT];
+   bool currentSpaceState = keys[GLFW_KEY_SPACE];
     
-    // Shift 键状态发生变化时
-    if (currentShiftState && !lastShiftState) {
+    // Space 键状态发生变化时
+    if (currentSpaceState && !lastSpaceState) {
         float currentTime = glfwGetTime();
-        if (currentTime - lastShiftPressTime < doubleClickTime) {
-            // 双击触发，切换飞行模式
+        if (currentTime - lastSpacePressTime < doubleClickTime) {
+            // Double-click detected, toggle flight mode
             isFlying = !isFlying;
-            velocity = glm::vec3(0.0f); // 切换模式时重置速度
+            velocity = glm::vec3(0.0f); // Reset velocity when toggling mode
         }
-        lastShiftPressTime = currentTime;
+        lastSpacePressTime = currentTime;
     }
-    lastShiftState = currentShiftState;
+    lastSpaceState = currentSpaceState;
 
     // 计算潜在的方向
     glm::vec3 direction(0.0f);
