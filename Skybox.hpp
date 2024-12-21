@@ -13,7 +13,7 @@ private:
     Shader skyboxShader;
     
     float dayTime = 0.0f;
-    const float DAY_LENGTH = 300.0f;  // 5分钟一个游戏日
+    const float DAY_LENGTH = 60.0f;  // 5分钟一个游戏日
     
     glm::vec3 sunPosition;
     glm::vec3 moonPosition;
