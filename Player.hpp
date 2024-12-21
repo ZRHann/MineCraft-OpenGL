@@ -22,6 +22,11 @@ private:
     float yaw;           // 偏航角
     float pitch;         // 俯仰角
 
+    // 疾跑参数
+    const float normalSpeed = 5.0f;     // 正常移动速度
+    const float sprintSpeed = 10.0f;    // 疾跑速度
+    bool isSprinting = false;           // 是否正在疾跑
+
     // 飞行参数
     bool isFlying = false;                    // 是否处于飞行状态
     float lastSpacePressTime = 0.0f;         // 上一次按下 Space 键的时间
@@ -107,11 +112,19 @@ public:
         if (key >= 0 && key < 1024) {
             if (action == GLFW_PRESS) {
                 keys[key] = true;
+                // 检测左 Ctrl 键
+                if (key == GLFW_KEY_LEFT_CONTROL) {
+                    isSprinting = true;
+                }
             } else if (action == GLFW_RELEASE) {
                 keys[key] = false;
+                // 松开左 Ctrl 键
+                if (key == GLFW_KEY_LEFT_CONTROL) {
+                    isSprinting = false;
+                }
             }
         }
-        // updatePosition();
+        // updatePosition()
     }
 
     // 脚底y为整数 && 脚底有方块 && 垂直速度为0 -> true
@@ -149,7 +162,24 @@ public:
 
     // 更新摄像机位置
     void updatePosition(float deltaTime) {
-    // 检测双击 Shift
+    // 根据是否疾跑来决定移动速度
+    float currentSpeed = isSprinting ? sprintSpeed : normalSpeed;
+    
+    // WASD 移动
+    if (keys[GLFW_KEY_W]) {
+        position += front * currentSpeed * deltaTime;
+    }
+    if (keys[GLFW_KEY_S]) {
+        position -= front * currentSpeed * deltaTime;
+    }
+    if (keys[GLFW_KEY_A]) {
+        position -= right * currentSpeed * deltaTime;
+    }
+    if (keys[GLFW_KEY_D]) {
+        position += right * currentSpeed * deltaTime;
+    }
+
+    // 检测双击 Space
    bool currentSpaceState = keys[GLFW_KEY_SPACE];
     
     // Space 键状态发生变化时
