@@ -22,6 +22,12 @@ private:
     float yaw;           // 偏航角
     float pitch;         // 俯仰角
 
+    // 飞行参数
+    bool isFlying = false;                    // 是否处于飞行状态
+    float lastShiftPressTime = 0.0f;         // 上一次按下 Shift 键的时间
+    const float doubleClickTime = 0.3f;      // 双击判定时间间隔（秒）
+    bool lastShiftState = false;             // 上一帧 Shift 键的状态
+
     const float mouseSensitivity = 0.03f; // 鼠标灵敏度
 
     float lastX, lastY;  // 上一帧鼠标位置
@@ -143,72 +149,108 @@ public:
 
     // 更新摄像机位置
     void updatePosition(float deltaTime) {
-        // 计算潜在的方向
-        glm::vec3 direction(0.0f);
-        glm::vec3 horizontalFront = glm::normalize(glm::vec3(front.x, 0.0f, front.z));
-        glm::vec3 horizontalRight = glm::normalize(glm::vec3(right.x, 0.0f, right.z));
+    // 检测双击 Shift
+    bool currentShiftState = keys[GLFW_KEY_LEFT_SHIFT] || keys[GLFW_KEY_RIGHT_SHIFT];
+    
+    // Shift 键状态发生变化时
+    if (currentShiftState && !lastShiftState) {
+        float currentTime = glfwGetTime();
+        if (currentTime - lastShiftPressTime < doubleClickTime) {
+            // 双击触发，切换飞行模式
+            isFlying = !isFlying;
+            velocity = glm::vec3(0.0f); // 切换模式时重置速度
+        }
+        lastShiftPressTime = currentTime;
+    }
+    lastShiftState = currentShiftState;
 
-        if (keys[GLFW_KEY_W]) direction += horizontalFront;
-        if (keys[GLFW_KEY_S]) direction -= horizontalFront;
-        if (keys[GLFW_KEY_A]) direction -= horizontalRight;
-        if (keys[GLFW_KEY_D]) direction += horizontalRight;
+    // 计算潜在的方向
+    glm::vec3 direction(0.0f);
+    glm::vec3 horizontalFront = glm::normalize(glm::vec3(front.x, 0.0f, front.z));
+    glm::vec3 horizontalRight = glm::normalize(glm::vec3(right.x, 0.0f, right.z));
+
+    if (keys[GLFW_KEY_W]) direction += front;        // 飞行模式下使用实际的前方向
+    if (keys[GLFW_KEY_S]) direction -= front;
+    if (keys[GLFW_KEY_A]) direction -= right;
+    if (keys[GLFW_KEY_D]) direction += right;
+    
+    // 飞行模式下的垂直移动
+    if (isFlying) {
+        if (keys[GLFW_KEY_SPACE]) direction += worldUp;
+        if (keys[GLFW_KEY_LEFT_SHIFT] || keys[GLFW_KEY_RIGHT_SHIFT]) direction -= worldUp;
+    } else {
+        // 非飞行模式下的跳跃
         if (keys[GLFW_KEY_SPACE] && isOnGround()) {
             velocity.y = jumpSpeed; // 初始化向上的速度
         }
+    }
 
-        // 如果有方向输入，更新水平速度
-        if (glm::length(direction) > 0.0f) {
-            direction = glm::normalize(direction);
+    // 如果有方向输入，更新水平速度
+    if (glm::length(direction) > 0.0f) {
+        direction = glm::normalize(direction);
+        if (isFlying) {
+            // 飞行模式下的移动
+            velocity = direction * movementSpeed;
+        } else {
+            // 非飞行模式下的移动
             velocity.x = direction.x * movementSpeed;
             velocity.z = direction.z * movementSpeed;
+        }
+    } else {
+        // 无输入时停止水平移动
+        if (isFlying) {
+            velocity = glm::vec3(0.0f);
         } else {
             velocity.x = 0.0f;
             velocity.z = 0.0f;
         }
+    }
 
-        // 垂直速度更新（重力&阻力影响）
+    // 垂直速度更新（重力&阻力影响）. 只在非飞行模式下应用重力
+    if (!isFlying) {
         velocity.y = (velocity.y + gravity.y * deltaTime) * resistanceFactor;
+    }
 
-        // 基于速度计算潜在的新位置
-        glm::vec3 potentialPosition = position + velocity * deltaTime;
+    // 基于速度计算潜在的新位置
+    glm::vec3 potentialPosition = position + velocity * deltaTime;
 
         // 逐方向碰撞检测
-        glm::vec3 nextPosition = position;
+    glm::vec3 nextPosition = position;
 
-        // X方向
-        nextPosition.x = potentialPosition.x;
-        glm::vec3 minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
-        glm::vec3 maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
-        if (world.isColliding(minBound, maxBound)) {
+    // X方向
+    nextPosition.x = potentialPosition.x;
+    glm::vec3 minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
+    glm::vec3 maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
+    if (world.isColliding(minBound, maxBound)) {
             nextPosition.x = position.x; // 恢复原位置
             velocity.x = 0.0f;           // 停止X方向速度
-        }
+    }
 
-        // Z方向
-        nextPosition.z = potentialPosition.z;
-        minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
-        maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
-        if (world.isColliding(minBound, maxBound)) {
+    // Z方向
+    nextPosition.z = potentialPosition.z;
+    minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
+    maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
+    if (world.isColliding(minBound, maxBound)) {
             nextPosition.z = position.z; // 恢复原位置
             velocity.z = 0.0f;           // 停止Z方向速度
-        }
+    }
 
-        // Y方向
-        nextPosition.y = potentialPosition.y;
-        minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
-        maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
-        if (world.isColliding(minBound, maxBound)) {
+    // Y方向
+    nextPosition.y = potentialPosition.y;
+    minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
+    maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
+    if (world.isColliding(minBound, maxBound)) {
             if (velocity.y < 0.0f) { // 如果正在下降
                 velocity.y = 0.0f;  // 停止Y方向速度
             }
             nextPosition.y = position.y; // 恢复原位置
-        }
+    }
 
-        // 更新最终位置
-        position = nextPosition;
+    // 更新最终位置
+    position = nextPosition;
         // std::cout << "velocity: " << velocity.x << " " << velocity.y << " " << velocity.z << std::endl;
         // std::cout << "position: " << position.x << " " << position.y << " " << position.z << std::endl;
-    }
+}
 
     // 切换手中方块
     void switchBlockInHand(){
