@@ -16,15 +16,14 @@ private:
     glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);   // 世界上方向
     glm::vec3 velocity = glm::vec3(0.0f);  // 玩家速度
     const glm::vec3 gravity = glm::vec3(0.0f, -32.0f, 0.0f); // 重力加速度
-    const float movementSpeed = 7.0f;  // 水平移动速度
     const float resistanceFactor  = 0.98f; // 空气阻力
     const float jumpSpeed = 11.0f; // 起跳速度(最大跳跃高度约1.25)
     float yaw;           // 偏航角
     float pitch;         // 俯仰角
 
     // 疾跑参数
-    const float normalSpeed = 5.0f;     // 正常移动速度
-    const float sprintSpeed = 10.0f;    // 疾跑速度
+    const float normalSpeed = 7.0f;     // 正常移动速度
+    const float sprintSpeed = 12.0f;    // 疾跑速度
     bool isSprinting = false;           // 是否正在疾跑
 
     // 飞行参数
@@ -216,11 +215,11 @@ public:
             direction = glm::normalize(direction);
             if (isFlying) {
                 // 飞行模式下的移动
-                velocity = direction * movementSpeed;
+                velocity = direction * currentSpeed;
             } else {
                 // 非飞行模式下的移动
-                velocity.x = direction.x * movementSpeed;
-                velocity.z = direction.z * movementSpeed;
+                velocity.x = direction.x * currentSpeed;
+                velocity.z = direction.z * currentSpeed;
             }
         } else {
             // 无输入时停止水平移动
