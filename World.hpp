@@ -7,13 +7,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <FastNoiseLite.h>
 #include <vector>
-
-enum BlockType {
-    BLOCK_AIR,
-    GRASS_BLOCK,
-    OAK_LOG,
-    OAK_LEAVES
-};
+#include "Block.hpp"
+#include "ParticleSystem.hpp"
 
 // 32位随机数生成器
 int rand32() {
@@ -29,6 +24,7 @@ public:
     const int maxTreeHeight = 7; // 树木最大高度
     int worldWidth, worldHeight, worldDepth; // 地图的最大尺寸
     int worldSeed; // 地图种子
+    ParticleSystem particleSystem; // 粒子系统
     TextureManager textureManager; // 纹理管理器
     std::vector<std::vector<std::vector<int>>> map; // 方块类型的3D数组
 
@@ -38,7 +34,7 @@ public:
     GLuint wireframeVAO, wireframeVBO; // 用于存储线框顶点的 VAO 和 VBO
     GeometryShader wireframe_shader; // 线框着色器
 
-    World(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d) {
+    World(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d),particleSystem(textureManager) {
         map.resize(worldWidth, std::vector<std::vector<int>>(worldHeight, std::vector<int>(worldDepth, 0)));
 
 
@@ -395,7 +391,12 @@ public:
     }
 
     void updateBlock(int x, int y, int z, BlockType type) {
-        setBlock(x, y, z, type); // 设置为空地
+        BlockType oldType = getBlock(x, y, z);
+        if(oldType != BlockType::BLOCK_AIR) {
+            // 销毁方块时产生粒子
+            particleSystem.emit(glm::vec3(x + 0.5f, y + 0.5f, z + 0.5f), oldType);
+        }
+        setBlock(x, y, z, type);
         std::vector<float> blockVertices = getCubeVertices(x, y, z, type);
 
         int blockIndex = x * worldHeight * worldDepth + y * worldDepth + z; // 方块索引

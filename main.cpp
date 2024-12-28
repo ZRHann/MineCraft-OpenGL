@@ -153,9 +153,12 @@ int main() {
         // 绘制 FPS
         fpsCounter.update();
         fpsCounter.drawFPS(window);
-
+        // 天空盒
         skybox.update(deltaTime);
         skybox.render(view, projection);
+
+        world.particleSystem.update(deltaTime);
+        world.particleSystem.render(view, projection);
 
         // 交换缓冲区
         glfwSwapBuffers(window);
