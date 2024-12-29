@@ -15,6 +15,7 @@
 #include <GL/glu.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include "Inventory.hpp"
 const int MSAA_LEVEL = 16;      // 可选值: 0, 1, 2, 4, 8, 16 (默认: 0, 禁用 MSAA)
 const float ANISO_LEVEL = 16.0; // 可选值: 1.0, 2.0, 4.0, 8.0, 16.0 (默认: 1.0, 禁用各向异性过滤)
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
@@ -121,6 +122,21 @@ int main() {
     // 创建摄像机对象, 设置鼠标回调函数
     Player player(glm::vec3(worldWidth / 2, worldHeight + 2, worldDepth / 2), world, windowWidth, windowHeight);
     player.attachToWindow(window);
+
+    // 初始化ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 460");
+
+    
+
+    // 注册滚轮回调
+    glfwSetScrollCallback(window, [](GLFWwindow* window, double xOffset, double yOffset) {
+        Inventory* inv = static_cast<Inventory*>(glfwGetWindowUserPointer(window));
+        inv->scrollSlot(yOffset);
+    });
     
     float lastFrameTime = glfwGetTime();
     float deltaTime = 0.0f;
@@ -156,9 +172,21 @@ int main() {
         // 天空盒
         skybox.update(deltaTime);
         skybox.render(view, projection);
-
+        // 更新粒子系统
         world.particleSystem.update(deltaTime);
         world.particleSystem.render(view, projection);
+
+        // 开始ImGui帧
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // 渲染物品栏
+        player.inventory_render();
+
+        // 结束ImGui帧
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // 交换缓冲区
         glfwSwapBuffers(window);
@@ -172,6 +200,11 @@ int main() {
         // 切换放置的方块
         player.switchBlockInHand();
     }
+
+    // 清理ImGui
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     // 清理和退出
     glfwDestroyWindow(window);

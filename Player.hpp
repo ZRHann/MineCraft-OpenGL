@@ -5,7 +5,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
 #include <iostream>
-
+#include "Inventory.hpp"
 
 class Player {
 private:
@@ -36,6 +36,9 @@ private:
 
     float lastX, lastY;  // 上一帧鼠标位置
 
+    // 物品栏实例
+    Inventory inventory;
+
     bool keys[1024] = { false }; // 用于记录按键状态
     World& world;
 
@@ -47,7 +50,7 @@ public:
         : position(startPosition) 
         , world(world) 
         , windowWidth(width)
-        , windowHeight(height) {
+        , windowHeight(height), inventory(world.textureManager) {
         yaw = -90.0f;
         pitch = 0.0f;
         lastX = width / 2;
@@ -114,6 +117,13 @@ public:
                 // 检测左 Ctrl 键
                 if (key == GLFW_KEY_LEFT_CONTROL) {
                     isSprinting = true;
+                }
+                // 物品栏控制
+                if (key == GLFW_KEY_Q) {
+                    inventory.scrollSlot(1);  // 向左切换
+                }
+                if (key == GLFW_KEY_E) {
+                    inventory.scrollSlot(-1); // 向右切换
                 }
             } else if (action == GLFW_RELEASE) {
                 keys[key] = false;
@@ -290,6 +300,8 @@ public:
 
     // 切换手中方块
     void switchBlockInHand(){
+         // Update blockInHand based on inventory selection
+        blockInHand = inventory.getSelectedBlock();
         if (keys[GLFW_KEY_0]) blockInHand = BLOCK_AIR;
         if (keys[GLFW_KEY_1]) blockInHand = GRASS_BLOCK;
         if (keys[GLFW_KEY_2]) blockInHand = OAK_LOG;
@@ -344,5 +356,9 @@ public:
     // 获取摄像机前方向（光线方向）
     glm::vec3 getRayDirection() const {
         return front;
+    }
+
+    void inventory_render(){
+        this->inventory.render();
     }
 };

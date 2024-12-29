@@ -5,6 +5,8 @@
 #include <stb_image.h>
 #include <iostream>
 #include <vector>
+#include "Block.hpp"
+
 enum TextureType {
     TEXTURE_AIR, 
     GRASS_BLOCK_TOP,
@@ -119,3 +121,18 @@ public:
         return textureID;
     }
 };
+
+int getTextureLayer(BlockType type) {
+    switch(type) {
+        case BlockType::BLOCK_AIR:
+            return 0;  // Empty texture layer
+        case BlockType::GRASS_BLOCK:
+            return 1;  // grass_block_top.png
+        case BlockType::OAK_LOG:
+            return 4;  // oak_log_top.png
+        case BlockType::OAK_LEAVES:
+            return 6;  // azalea_leaves.png
+        default:
+            return 0;
+    }
+}

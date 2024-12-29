@@ -36,20 +36,7 @@ public:
 };
 
 // Add helper function to map BlockType to texture layer
-int getTextureLayer(BlockType type) {
-    switch(type) {
-        case BlockType::BLOCK_AIR:
-            return 0;  // Empty texture layer
-        case BlockType::GRASS_BLOCK:
-            return 1;  // grass_block_top.png
-        case BlockType::OAK_LOG:
-            return 4;  // oak_log_top.png
-        case BlockType::OAK_LEAVES:
-            return 6;  // azalea_leaves.png
-        default:
-            return 0;
-    }
-}
+
 
 void ParticleSystem::emit(const glm::vec3& position, BlockType blockType) {
     

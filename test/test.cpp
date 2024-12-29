@@ -11,7 +11,7 @@
 
 // 顶点着色器代码
 const char* vertexShaderSource = R"(
-    #version 330 core
+    #version 460 core
     layout(location = 0) in vec3 aPos;
     layout(location = 1) in vec3 aColor;
     out vec3 vertexColor;  // 传递给片段着色器的颜色
@@ -27,7 +27,7 @@ const char* vertexShaderSource = R"(
 
 // 片段着色器代码
 const char* fragmentShaderSource = R"(
-    #version 330 core
+    #version 460 core
     in vec3 vertexColor;  // 从顶点着色器传来的颜色
     out vec4 FragColor;
     void main()
