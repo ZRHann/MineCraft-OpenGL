@@ -125,6 +125,15 @@ public:
                 if (key == GLFW_KEY_E) {
                     inventory.scrollSlot(-1); // 向右切换
                 }
+                if (key == GLFW_KEY_1) {
+                    inventory.setSelectedSlot(0);
+                }
+                if (key == GLFW_KEY_2) {
+                    inventory.setSelectedSlot(1);
+                }
+                if (key == GLFW_KEY_3) {
+                    inventory.setSelectedSlot(2);
+                }
             } else if (action == GLFW_RELEASE) {
                 keys[key] = false;
                 // 松开左 Ctrl 键
@@ -302,10 +311,6 @@ public:
     void switchBlockInHand(){
          // Update blockInHand based on inventory selection
         blockInHand = inventory.getSelectedBlock();
-        if (keys[GLFW_KEY_0]) blockInHand = BLOCK_AIR;
-        if (keys[GLFW_KEY_1]) blockInHand = GRASS_BLOCK;
-        if (keys[GLFW_KEY_2]) blockInHand = OAK_LOG;
-        if (keys[GLFW_KEY_3]) blockInHand = OAK_LEAVES;
     }
 
     // 鼠标回调函数

@@ -82,6 +82,10 @@ public:
         if (selectedSlot >= INVENTORY_SIZE) selectedSlot = 0;
     }
 
+    void setSelectedSlot(int slot) {
+        selectedSlot = slot;
+    }
+
     void createTextureViews(const TextureManager& textureManager) {
         textureViews.resize(textureManager.texture_imgs.size() + 1);
         // 第 0 层是空气
