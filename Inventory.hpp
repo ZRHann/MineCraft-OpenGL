@@ -32,7 +32,7 @@ public:
 
         // 计算物品栏位置
         float inventoryWidth = 400; // 物品栏宽度
-        float inventoryHeight = 100; // 物品栏高度
+        float inventoryHeight = 65; // 物品栏高度
         float padding = 20; // 底部边距
 
         ImVec2 inventoryPos(
@@ -43,6 +43,7 @@ public:
         // 设置窗口位置和大小
         ImGui::SetNextWindowPos(inventoryPos, ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(inventoryWidth, inventoryHeight));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 0.6f)); // 半透明灰褐色
         ImGui::Begin("Inventory", nullptr, 
             ImGuiWindowFlags_NoTitleBar | 
             ImGuiWindowFlags_NoResize | 
@@ -57,6 +58,9 @@ public:
             if (i == selectedSlot) {
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
             }
+            else {
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.4f, 0.4f, 0.4f, 1.0f)); // 默认槽位的灰色
+            }
             // 槽位标签
             std::string label = "##slot" + std::to_string(i);
             // 材质索引
@@ -67,12 +71,11 @@ public:
             ImVec2(40, 40)
             );
 
-            if (i == selectedSlot) {
-                ImGui::PopStyleColor();
-            }
+            ImGui::PopStyleColor();
         }
 
         ImGui::End();
+        ImGui::PopStyleColor(); // 恢复窗口背景颜色
     }
 
     // 通过鼠标滚轮切换选中的槽位
