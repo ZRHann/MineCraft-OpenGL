@@ -262,7 +262,7 @@ public:
         // 基于速度计算潜在的新位置
         glm::vec3 potentialPosition = position + velocity * deltaTime;
 
-            // 逐方向碰撞检测
+        // 逐方向碰撞检测
         glm::vec3 nextPosition = position;
 
         

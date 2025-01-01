@@ -1,5 +1,5 @@
 ### 硬件
- - NVIDIA GeForce RTX 4060 Laptop
+ - 需要一定性能的游戏显卡
 
 ### 环境
  - Windows
@@ -9,7 +9,6 @@
 https://github.com/Faithful-Pack/Default-Java/tree/1.19.3/assets/minecraft/textures/block
 
 ### TODO
- - 优化编译速度（stb_image, glad, glm, ...搞成库链接）
  - 优化渲染性能（识别热点，视锥裁剪，遮挡剔除...）
  
 ### 构建 
@@ -18,7 +17,8 @@ https://github.com/Faithful-Pack/Default-Java/tree/1.19.3/assets/minecraft/textu
 
 ```bash
 # 仅编译
-make
+make # 或 mingw32-make
 # 编译加运行
 make run
 ```
+

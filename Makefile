@@ -36,22 +36,44 @@ IMGUI_LIB = lib/libimgui.a
 TARGET = minecraft_opengl.exe
 
 .DEFAULT_GOAL := all
-# Default parallel execution
-# MAKEFLAGS += -j
+
+
+# Environment detection
+ifeq ($(OS),Windows_NT)
+    IS_WINDOWS = 1
+else
+    IS_WINDOWS = 0
+endif
 
 # Rules
 .PHONY: all clean directories
 
 all: directories 
-	make -j $(TARGET)
+	@echo Operating System detected: $(OS)
+	@echo Is Windows: $(IS_WINDOWS)
+	$(MAKE) -j $(TARGET)
 
 directories:
-	@if not exist lib mkdir lib
+ifeq ($(IS_WINDOWS), 1)
+	@if not exist lib (mkdir lib)
+else
+	@mkdir -p lib
+endif
 
 $(GLAD_LIB): $(GLAD_OBJ)
+ifeq ($(IS_WINDOWS), 1)
+	@if not exist lib (mkdir lib)
+else
+	@mkdir -p lib
+endif
 	$(AR) rcs $@ $^
 
 $(IMGUI_LIB): $(IMGUI_OBJS)
+ifeq ($(IS_WINDOWS), 1)
+	@if not exist lib (mkdir lib)
+else
+	@mkdir -p lib
+endif
 	$(AR) rcs $@ $^
 
 $(TARGET): $(GAME_OBJS) $(GLAD_LIB) $(IMGUI_LIB)
@@ -64,18 +86,19 @@ $(TARGET): $(GAME_OBJS) $(GLAD_LIB) $(IMGUI_LIB)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	@if exist requirements\glad\glad.o del requirements\glad\glad.o
-	@if exist requirements\imgui-1.91.6\imgui.o del requirements\imgui-1.91.6\imgui.o
-	@if exist requirements\imgui-1.91.6\imgui_draw.o del requirements\imgui-1.91.6\imgui_draw.o
-	@if exist requirements\imgui-1.91.6\imgui_tables.o del requirements\imgui-1.91.6\imgui_tables.o
-	@if exist requirements\imgui-1.91.6\imgui_widgets.o del requirements\imgui-1.91.6\imgui_widgets.o
-	@if exist requirements\imgui-1.91.6\backends\imgui_impl_glfw.o del requirements\imgui-1.91.6\backends\imgui_impl_glfw.o
-	@if exist requirements\imgui-1.91.6\backends\imgui_impl_opengl3.o del requirements\imgui-1.91.6\backends\imgui_impl_opengl3.o
-	@if exist main.o del main.o
-	@if exist minecraft_opengl.exe del minecraft_opengl.exe
-	@if exist lib\libglad.a del lib\libglad.a
-	@if exist lib\libimgui.a del lib\libimgui.a
-	@if exist lib rmdir /s /q lib
+ifeq ($(IS_WINDOWS), 1)
+	@if exist *.o del /Q *.o
+	@if exist $(TARGET) del /Q $(TARGET)
+	@if exist lib rmdir /S /Q lib
+else
+	rm -f $(GLAD_OBJ) $(IMGUI_OBJS) $(GAME_OBJS) $(TARGET)
+	rm -f $(GLAD_LIB) $(IMGUI_LIB)
+	rm -rf lib
+endif
 
 run: all
+ifeq ($(IS_WINDOWS), 1)
 	.\$(TARGET)
+else
+	./$(TARGET)
+endif
