@@ -7,7 +7,6 @@
 #include <string>
 #include "Shader.hpp"
 #include "DayTime.hpp"
-#define PI 3.14159265358979323846
 
 class Skybox {
 private:
@@ -79,8 +78,7 @@ public:
         glm::mat4 skyView = glm::mat4(glm::mat3(view));
         skyboxShader.setUniformMatrix4fv("view", glm::value_ptr(skyView));
         skyboxShader.setUniformMatrix4fv("projection", glm::value_ptr(projection));
-        skyboxShader.setUniform1f("dayTime", DayTime::getCurrentTime());
-        skyboxShader.setUniform1f("dayLength", DayTime::getDayLength());
+        skyboxShader.setUniform1f("dayNightBlendFactor", DayTime::getDayNightBlendFactor());
 
         glBindVertexArray(skyboxVAO);
         glActiveTexture(GL_TEXTURE0);

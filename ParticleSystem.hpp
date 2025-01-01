@@ -6,6 +6,7 @@
 #include "Shader.hpp"
 #include "Block.hpp"
 #include "TextureManager.hpp"
+#include "DayTime.hpp"
 
 class ParticleSystem {
 private:
@@ -54,7 +55,7 @@ void ParticleSystem::emit(const glm::vec3& position, BlockType blockType) {
         );
         
         p.life = 1.0f;
-        p.size = 100.0f;
+        p.size = 80.0f;
         p.textureLayer = getTextureLayer(blockType);
         particles.push_back(p);
     }
@@ -115,6 +116,7 @@ void ParticleSystem::render(const glm::mat4& view, const glm::mat4& projection) 
     particleShader.setUniform1i("textureArray", 0);
     particleShader.setUniformMatrix4fv("view", glm::value_ptr(view));
     particleShader.setUniformMatrix4fv("projection", glm::value_ptr(projection));
+    particleShader.setUniform1f("dayNightBlendFactor", DayTime::getDayNightBlendFactor());
     
     std::vector<float> particleData;
     for (const auto& particle : particles) {

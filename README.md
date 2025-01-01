@@ -13,7 +13,7 @@ https://github.com/Faithful-Pack/Default-Java/tree/1.19.3/assets/minecraft/textu
  
 ### 构建 
 
-在 MINGW 环境中编译，确保安装了 MINGW 下 GCC 构建工具链。已经开启了并行编译，尽可能加速编译。
+在 MINGW 环境中编译，确保安装了 MINGW 下 GCC 构建工具链。
 
 ```bash
 # 仅编译
@@ -21,4 +21,4 @@ make # 或 mingw32-make
 # 编译加运行
 make run
 ```
-
+如遇到问题，也可直接使用`run.bat`编译运行，但编译速度较慢。

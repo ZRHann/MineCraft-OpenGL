@@ -9,6 +9,7 @@
 #include <vector>
 #include "Block.hpp"
 #include "ParticleSystem.hpp"
+#include "DayTime.hpp"
 
 // 32位随机数生成器
 int rand32() {
@@ -337,6 +338,7 @@ public:
         // 设置视图和投影矩阵
         world_shader.setUniformMatrix4fv("view", glm::value_ptr(view));
         world_shader.setUniformMatrix4fv("projection", glm::value_ptr(projection));
+        world_shader.setUniform1f("dayNightBlendFactor", DayTime::getDayNightBlendFactor());
 
         glBindVertexArray(VAO);
 
