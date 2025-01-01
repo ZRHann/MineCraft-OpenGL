@@ -261,46 +261,36 @@ public:
             // 逐方向碰撞检测
         glm::vec3 nextPosition = position;
 
-        if (isFlying) {
-            // 飞行模式的碰撞检测
-            glm::vec3 minBound = potentialPosition - glm::vec3(0.2f);
-            glm::vec3 maxBound = potentialPosition + glm::vec3(0.2f);
-            
-            if (!world.isColliding(minBound, maxBound)) {
-                nextPosition = potentialPosition;
-            } else {
-                velocity *= 0.8f; // 碰撞时减缓速度而不是完全停止
-            }
-        } else {
-            // X方向
-            nextPosition.x = potentialPosition.x;
-            glm::vec3 minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
-            glm::vec3 maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
-            if (world.isColliding(minBound, maxBound)) {
-                    nextPosition.x = position.x; // 恢复原位置
-                    velocity.x = 0.0f;           // 停止X方向速度
-            }
-
-            // Z方向
-            nextPosition.z = potentialPosition.z;
-            minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
-            maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
-            if (world.isColliding(minBound, maxBound)) {
-                    nextPosition.z = position.z; // 恢复原位置
-                    velocity.z = 0.0f;           // 停止Z方向速度
-            }
-
-            // Y方向
-            nextPosition.y = potentialPosition.y;
-            minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
-            maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
-            if (world.isColliding(minBound, maxBound)) {
-                    if (velocity.y < 0.0f) { // 如果正在下降
-                        velocity.y = 0.0f;  // 停止Y方向速度
-                    }
-                    nextPosition.y = position.y; // 恢复原位置
-            }
+        
+        // X方向
+        nextPosition.x = potentialPosition.x;
+        glm::vec3 minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
+        glm::vec3 maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
+        if (world.isColliding(minBound, maxBound)) {
+                nextPosition.x = position.x; // 恢复原位置
+                velocity.x = 0.0f;           // 停止X方向速度
         }
+
+        // Z方向
+        nextPosition.z = potentialPosition.z;
+        minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
+        maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
+        if (world.isColliding(minBound, maxBound)) {
+                nextPosition.z = position.z; // 恢复原位置
+                velocity.z = 0.0f;           // 停止Z方向速度
+        }
+
+        // Y方向
+        nextPosition.y = potentialPosition.y;
+        minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
+        maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
+        if (world.isColliding(minBound, maxBound)) {
+                if (velocity.y < 0.0f) { // 如果正在下降
+                    velocity.y = 0.0f;  // 停止Y方向速度
+                }
+                nextPosition.y = position.y; // 恢复原位置
+        }
+        
         // 更新最终位置
         position = nextPosition;
             // std::cout << "velocity: " << velocity.x << " " << velocity.y << " " << velocity.z << std::endl;
