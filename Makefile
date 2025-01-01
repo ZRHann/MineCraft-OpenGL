@@ -51,6 +51,7 @@ endif
 all: directories 
 	@echo Operating System detected: $(OS)
 	@echo Is Windows: $(IS_WINDOWS)
+	@if exist $(TARGET) del /Q $(TARGET)
 	$(MAKE) -j $(TARGET)
 
 directories:
