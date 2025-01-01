@@ -26,7 +26,7 @@ private:
     const float sprintSpeed = 12.0f;    // 疾跑速度
     bool isSprinting = false;           // 是否正在疾跑
 
-    // 飞行参数ww d 
+    // 飞行参数
     bool isFlying = false;                    // 是否处于飞行状态
     float lastSpacePressTime = 0.0f;         // 上一次按下 Space 键的时间
     const float doubleClickTime = 0.3f;      // 双击判定时间间隔（秒）
@@ -182,7 +182,7 @@ public:
     }
 
 
-    // 更新摄像机位置
+    // 更新玩家位置
     void updatePosition(float deltaTime) {
         // 根据是否疾跑来决定移动速度
         float currentSpeed = isSprinting ? sprintSpeed : normalSpeed;
@@ -271,8 +271,8 @@ public:
         glm::vec3 minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
         glm::vec3 maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
         if (world.isColliding(minBound, maxBound)) {
-                nextPosition.x = position.x; // 恢复原位置
-                velocity.x = 0.0f;           // 停止X方向速度
+            nextPosition.x = position.x; // 恢复原位置
+            velocity.x = 0.0f;           // 停止X方向速度
         }
 
         // Z方向
@@ -280,8 +280,8 @@ public:
         minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
         maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
         if (world.isColliding(minBound, maxBound)) {
-                nextPosition.z = position.z; // 恢复原位置
-                velocity.z = 0.0f;           // 停止Z方向速度
+            nextPosition.z = position.z; // 恢复原位置
+            velocity.z = 0.0f;           // 停止Z方向速度
         }
 
         // Y方向
@@ -289,10 +289,10 @@ public:
         minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
         maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
         if (world.isColliding(minBound, maxBound)) {
-                if (velocity.y < 0.0f) { // 如果正在下降
-                    velocity.y = 0.0f;  // 停止Y方向速度
-                }
-                nextPosition.y = position.y; // 恢复原位置
+            if (velocity.y < 0.0f) { // 如果正在下降
+                velocity.y = 0.0f;  // 停止Y方向速度
+            }
+            nextPosition.y = position.y; // 恢复原位置
         }
         
         // 更新最终位置

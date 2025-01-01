@@ -15,7 +15,6 @@ int rand32() {
     return rand() << 16 | rand();
 }
 
-
 class World {
 public:
     const int vertexCountPerBlock = 36;
@@ -627,7 +626,7 @@ public:
         wireframe_shader.setUniformMatrix4fv("model", glm::value_ptr(model));
         wireframe_shader.setUniformMatrix4fv("view", glm::value_ptr(view));
         wireframe_shader.setUniformMatrix4fv("projection", glm::value_ptr(projection));
-        wireframe_shader.setUniform1f("lineWidth", 0.055f); // 设置线宽
+        wireframe_shader.setUniform1f("lineWidth", 0.02f); // 设置线宽
 
         glBindVertexArray(wireframeVAO);
         glDrawArrays(GL_LINES, 0, 48); // 12 条线 * 2 个顶点 = 24 个点*2组=48

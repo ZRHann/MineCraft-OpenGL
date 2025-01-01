@@ -16,6 +16,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include "Inventory.hpp"
+#include "DayTime.hpp"
 const int MSAA_LEVEL = 16;      // 可选值: 0, 1, 2, 4, 8, 16 (默认: 0, 禁用 MSAA)
 const float ANISO_LEVEL = 16.0; // 可选值: 1.0, 2.0, 4.0, 8.0, 16.0 (默认: 1.0, 禁用各向异性过滤)
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
@@ -170,8 +171,9 @@ int main() {
         fpsCounter.update();
         fpsCounter.drawFPS(window);
         // 天空盒
-        skybox.update(deltaTime);
         skybox.render(view, projection);
+        // 时间
+        DayTime::update(deltaTime);
         // 更新粒子系统
         world.particleSystem.update(deltaTime);
         world.particleSystem.render(view, projection);

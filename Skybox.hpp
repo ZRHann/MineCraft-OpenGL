@@ -6,18 +6,13 @@
 #include <vector>
 #include <string>
 #include "Shader.hpp"
+#include "DayTime.hpp"
 #define PI 3.14159265358979323846
 
 class Skybox {
 private:
     GLuint skyboxVAO, skyboxVBO, cubemapTexture;
     Shader skyboxShader;
-
-    float dayTime = 0.0f;
-    const float DAY_LENGTH = 60.0f;  // 5分钟一个游戏日
-
-    glm::vec3 sunPosition;
-    glm::vec3 moonPosition;
 
     const float skyboxVertices[108] = {
         -1.0f,  1.0f, -1.0f,
@@ -68,7 +63,6 @@ public:
         setupSkyboxMesh();
         loadShaders();
         loadCubemapTextures();
-        updateCelestialBodies();
     }
 
     ~Skybox() {
@@ -77,11 +71,6 @@ public:
         glDeleteTextures(1, &cubemapTexture);
     }
 
-    void update(float deltaTime) {
-        dayTime += deltaTime / DAY_LENGTH * 24.0f;
-        if (dayTime >= 24.0f) dayTime -= 24.0f;
-        updateCelestialBodies();
-    }
 
     void render(const glm::mat4& view, const glm::mat4& projection) {
         glDepthFunc(GL_LEQUAL);
@@ -90,17 +79,14 @@ public:
         glm::mat4 skyView = glm::mat4(glm::mat3(view));
         skyboxShader.setUniformMatrix4fv("view", glm::value_ptr(skyView));
         skyboxShader.setUniformMatrix4fv("projection", glm::value_ptr(projection));
-        skyboxShader.setUniform1f("dayTime", dayTime);
+        skyboxShader.setUniform1f("dayTime", DayTime::getCurrentTime());
+        skyboxShader.setUniform1f("dayLength", DayTime::getDayLength());
 
         glBindVertexArray(skyboxVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glDepthFunc(GL_LESS);
-    }
-
-    float getGameTime() const {
-        return dayTime;
     }
 
 private:
@@ -153,16 +139,5 @@ private:
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    }
-
-    void updateCelestialBodies() {
-        float sunAngle = (dayTime / 24.0f) * 2.0f * PI;
-        float radius = 90.0f;
-        sunPosition = glm::vec3(
-            cos(sunAngle) * radius,
-            sin(sunAngle) * radius,
-            0.0f
-        );
-        moonPosition = -sunPosition;
     }
 };
