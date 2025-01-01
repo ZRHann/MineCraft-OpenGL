@@ -26,11 +26,15 @@ private:
     const float sprintSpeed = 12.0f;    // 疾跑速度
     bool isSprinting = false;           // 是否正在疾跑
 
-    // 飞行参数
+    // 飞行参数ww d 
     bool isFlying = false;                    // 是否处于飞行状态
     float lastSpacePressTime = 0.0f;         // 上一次按下 Space 键的时间
     const float doubleClickTime = 0.3f;      // 双击判定时间间隔（秒）
     bool lastSpaceState = false;             // 上一帧 Space 键的状态
+
+    const float cameraHeight = 1.62f; // 摄像机高度
+    const float playerHeight = 1.8f;  // 玩家高度
+    const float halfPlayerWidth = 0.3f; // 玩家宽度的一半
 
     const float mouseSensitivity = 0.03f; // 鼠标灵敏度
 
@@ -149,8 +153,8 @@ public:
     bool isOnGround() {
         const float eps = 0.01f;      // 精度
         // 脚底范围
-        glm::vec3 minBound = position + glm::vec3(-0.3f, -1.62f, -0.3f);
-        glm::vec3 maxBound = position + glm::vec3(0.3f, -1.62f, 0.3f);
+        glm::vec3 minBound = position + glm::vec3(-halfPlayerWidth, -cameraHeight, -halfPlayerWidth);
+        glm::vec3 maxBound = position + glm::vec3(halfPlayerWidth, -cameraHeight, halfPlayerWidth);
         // 检查脚底y坐标是否接近整数
         if (std::abs(minBound.y - std::round(minBound.y)) > eps) {
             return false; 
@@ -264,8 +268,8 @@ public:
         
         // X方向
         nextPosition.x = potentialPosition.x;
-        glm::vec3 minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
-        glm::vec3 maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
+        glm::vec3 minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
+        glm::vec3 maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
         if (world.isColliding(minBound, maxBound)) {
                 nextPosition.x = position.x; // 恢复原位置
                 velocity.x = 0.0f;           // 停止X方向速度
@@ -273,8 +277,8 @@ public:
 
         // Z方向
         nextPosition.z = potentialPosition.z;
-        minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
-        maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
+        minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
+        maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
         if (world.isColliding(minBound, maxBound)) {
                 nextPosition.z = position.z; // 恢复原位置
                 velocity.z = 0.0f;           // 停止Z方向速度
@@ -282,8 +286,8 @@ public:
 
         // Y方向
         nextPosition.y = potentialPosition.y;
-        minBound = nextPosition - glm::vec3(0.3f, 1.62f, 0.3f);
-        maxBound = nextPosition + glm::vec3(0.3f, 0.18f, 0.3f);
+        minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
+        maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
         if (world.isColliding(minBound, maxBound)) {
                 if (velocity.y < 0.0f) { // 如果正在下降
                     velocity.y = 0.0f;  // 停止Y方向速度
@@ -327,8 +331,8 @@ public:
     void handRightClick() {
         glm::vec3 blockHit;
         if (world.findLastAirBlock(position, front, blockHit)) {
-            glm::vec3 minBound = position + glm::vec3(-0.3f, -1.62f, -0.3f);
-            glm::vec3 maxBound = position + glm::vec3(0.3f, 0.18f, 0.3f);
+            glm::vec3 minBound = position + glm::vec3(-halfPlayerWidth, -cameraHeight, -halfPlayerWidth);
+            glm::vec3 maxBound = position + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
             if (!world.isCollidingWith(minBound, maxBound, static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z)))
             {
                 world.updateBlock(static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z), blockInHand);
