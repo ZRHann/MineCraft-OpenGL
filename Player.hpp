@@ -336,9 +336,10 @@ public:
     // 处理右键点击
     void handRightClick() {
         glm::vec3 blockHit;
-        if (world.findLastAirBlock(position, front, blockHit)){
-            glm::vec3 playerBlockPos = glm::floor(position - glm::vec3(0.0f, 1.62f, 0.0f));// 获取玩家脚底所在的方块
-            if (blockHit != playerBlockPos && blockHit != playerBlockPos + glm::vec3(0, 1, 0))
+        if (world.findLastAirBlock(position, front, blockHit)) {
+            glm::vec3 minBound = position + glm::vec3(-0.3f, -1.62f, -0.3f);
+            glm::vec3 maxBound = position + glm::vec3(0.3f, 0.18f, 0.3f);
+            if (!world.isCollidingWith(minBound, maxBound, static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z)))
             {
                 world.updateBlock(static_cast<int>(blockHit.x), static_cast<int>(blockHit.y), static_cast<int>(blockHit.z), blockInHand);
             }

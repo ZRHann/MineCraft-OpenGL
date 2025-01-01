@@ -467,6 +467,82 @@ public:
         return false; // 无碰撞
     }
 
+    // 检测两个三维坐标形成的体积是否与目标方块碰撞
+    bool isCollidingWith(const glm::vec3& minBound, const glm::vec3& maxBound, int targetBlockX, int targetBlockY, int targetBlockZ) {
+        const float step = 0.3f;
+        const float eps = 0.0001f; // 阈值，避免检测非常小的范围
+
+        // 检查目标方块是否在碰撞范围内
+        auto isTargetBlock = [&](int x, int y, int z) {
+            return x == targetBlockX && y == targetBlockY && z == targetBlockZ;
+        };
+
+        // 遍历检测碰撞范围内的点
+        if (maxBound.x - minBound.x > eps) {
+            for (float x = minBound.x; x < maxBound.x; x += step) {
+                for (float y = minBound.y; y < maxBound.y; y += step) {
+                    for (float z = minBound.z; z < maxBound.z; z += step) {
+                        int blockX = static_cast<int>(std::floor(x));
+                        int blockY = static_cast<int>(std::floor(y));
+                        int blockZ = static_cast<int>(std::floor(z));
+
+                        if (isTargetBlock(blockX, blockY, blockZ)) {
+                            return true; // 如果目标方块在范围内，发生碰撞
+                        }
+                    }
+                }
+            }
+        }
+
+        // maxBound.y 检查顶部边缘
+        if (maxBound.y - minBound.y > eps) {
+            for (float x = minBound.x; x <= maxBound.x; x += step) {
+                for (float z = minBound.z; z <= maxBound.z; z += step) {
+                    int blockX = static_cast<int>(std::floor(x));
+                    int blockY = static_cast<int>(std::floor(maxBound.y));
+                    int blockZ = static_cast<int>(std::floor(z));
+
+                    if (isTargetBlock(blockX, blockY, blockZ)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // maxBound.z 检查深度方向的边缘
+        if (maxBound.z - minBound.z > eps) {
+            for (float x = minBound.x; x <= maxBound.x; x += step) {
+                for (float y = minBound.y; y <= maxBound.y; y += step) {
+                    int blockX = static_cast<int>(std::floor(x));
+                    int blockY = static_cast<int>(std::floor(y));
+                    int blockZ = static_cast<int>(std::floor(maxBound.z));
+
+                    if (isTargetBlock(blockX, blockY, blockZ)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // maxBound.x 检查宽度方向的边缘
+        if (maxBound.x - minBound.x > eps) {
+            for (float y = minBound.y; y <= maxBound.y; y += step) {
+                for (float z = minBound.z; z <= maxBound.z; z += step) {
+                    int blockX = static_cast<int>(std::floor(maxBound.x));
+                    int blockY = static_cast<int>(std::floor(y));
+                    int blockZ = static_cast<int>(std::floor(z));
+
+                    if (isTargetBlock(blockX, blockY, blockZ)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false; // 无碰撞
+    }
+
+
     void setupWireframeBuffers() {
         float wireframeVertices[] = {
             // Front face
