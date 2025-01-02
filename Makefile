@@ -39,20 +39,18 @@ TARGET = minecraft_opengl.exe
 
 
 # Environment detection
-ifeq ($(OS),Windows_NT)
-    IS_WINDOWS = 1
-else
+ifeq ($(MSYSTEM),UCRT64)
     IS_WINDOWS = 0
+else
+    IS_WINDOWS = 1
 endif
 
 # Rules
 .PHONY: all clean directories
 
-all: directories 
+all: directories clean
 	@echo Operating System detected: $(OS)
 	@echo Is Windows: $(IS_WINDOWS)
-	@if exist *.o del /Q *.o
-	@if exist $(TARGET) del /Q $(TARGET)
 	$(MAKE) -j $(TARGET)
 
 directories:
