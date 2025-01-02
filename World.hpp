@@ -10,6 +10,7 @@
 #include "Block.hpp"
 #include "ParticleSystem.hpp"
 #include "DayTime.hpp"
+#include "Wireframe.hpp"
 
 // 32位随机数生成器
 int rand32() {
@@ -31,8 +32,7 @@ public:
     GLuint VAO, VBO, EBO;  
     Shader world_shader;    // 着色器
 
-    GLuint wireframeVAO, wireframeVBO; // 用于存储线框顶点的 VAO 和 VBO
-    GeometryShader wireframe_shader; // 线框着色器
+    Wireframe wireframe;
 
     std::vector<unsigned int> blockIndices = {
         2, 1, 0, 3, 2, 0,  // Front face
@@ -60,19 +60,11 @@ public:
         worldSeed = rand32();
         srand(worldSeed);
         std::cout << "World Seed: " << worldSeed << std::endl;
-
-        // 初始化线框着色器
-        wireframe_shader.createProgram("shaders/Wireframe.vert", "shaders/Wireframe.frag","shaders/Wireframe.geom");
-
-        // 初始化线框缓冲区
-        setupWireframeBuffers();
     }
 
     ~World() {
         glDeleteVertexArrays(1, &VAO);
         glDeleteBuffers(1, &VBO);
-        glDeleteVertexArrays(1, &wireframeVAO);
-        glDeleteBuffers(1, &wireframeVBO);
     }
 
     // 设置某个位置的方块类型
@@ -552,96 +544,8 @@ public:
 
         return false; // 无碰撞
     }
-
-
-    void setupWireframeBuffers() {
-        float wireframeVertices[] = {
-            // Front face
-            0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, 0.0f,
-            1.0f, 0.0f, 0.0f,
-            1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f,
-
-            // Back face
-            0.0f, 0.0f, 1.0f,
-            1.0f, 0.0f, 1.0f,
-            1.0f, 0.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            0.0f, 1.0f, 1.0f,
-            0.0f, 1.0f, 1.0f,
-            0.0f, 0.0f, 1.0f,
-
-            // Top face
-            0.0f, 1.0f, 0.0f,
-            0.0f, 1.0f, 1.0f,
-            0.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-
-            // Bottom face
-            0.0f, 0.0f, 0.0f,
-            1.0f, 0.0f, 0.0f,
-            1.0f, 0.0f, 0.0f,
-            1.0f, 0.0f, 1.0f,
-            1.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 0.0f,
-
-            // Left face
-            0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 1.0f,
-            0.0f, 1.0f, 1.0f,
-            0.0f, 1.0f, 1.0f,
-            0.0f, 1.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f,
-
-            // Right face
-            1.0f, 0.0f, 0.0f,
-            1.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f,
-            1.0f, 0.0f, 1.0f,
-            1.0f, 0.0f, 1.0f,
-            1.0f, 0.0f, 0.0f,
-        };
-
-        glGenVertexArrays(1, &wireframeVAO);
-        glGenBuffers(1, &wireframeVBO);
-
-        glBindVertexArray(wireframeVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, wireframeVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(wireframeVertices), wireframeVertices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        glBindVertexArray(0);
-    }
+    
     void renderWireframe(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& blockPos) {
-        wireframe_shader.use();
-
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, blockPos);
-
-        wireframe_shader.setUniformMatrix4fv("model", glm::value_ptr(model));
-        wireframe_shader.setUniformMatrix4fv("view", glm::value_ptr(view));
-        wireframe_shader.setUniformMatrix4fv("projection", glm::value_ptr(projection));
-        wireframe_shader.setUniform1f("lineWidth", 0.02f); // 设置线宽
-
-        glBindVertexArray(wireframeVAO);
-        glDrawArrays(GL_LINES, 0, 48); // 12 条线 * 2 个顶点 = 24 个点*2组=48
-        glBindVertexArray(0);
+        wireframe.render(view, projection, blockPos);
     }
 };
