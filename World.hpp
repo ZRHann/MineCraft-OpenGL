@@ -18,7 +18,7 @@ int rand32() {
 
 class World {
 public:
-    const int vertexCountPerBlock = 36;
+    const int vertexCountPerBlock = 24;
     const int attributesPerVertex = 6;
     const int blockStride = vertexCountPerBlock * attributesPerVertex;
     const int maxTreeHeight = 7; // 树木最大高度
@@ -28,11 +28,20 @@ public:
     TextureManager textureManager; // 纹理管理器
     std::vector<std::vector<std::vector<int>>> map; // 方块类型的3D数组
 
-    GLuint VAO, VBO;  // 用于存储地图顶点的 VAO 和 VBO
+    GLuint VAO, VBO, EBO;  
     Shader world_shader;    // 着色器
 
     GLuint wireframeVAO, wireframeVBO; // 用于存储线框顶点的 VAO 和 VBO
     GeometryShader wireframe_shader; // 线框着色器
+
+    std::vector<unsigned int> blockIndices = {
+        2, 1, 0, 3, 2, 0,  // Front face
+        4, 5, 6, 4, 6, 7,  // Back face
+        10, 9, 8, 11, 10, 8,  // Left face
+        12, 13, 14, 12, 14, 15,  // Right face
+        18, 17, 16, 19, 18, 16,  // Top face
+        20, 21, 22, 20, 22, 23   // Bottom face
+    };
 
     World(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d),particleSystem(textureManager) {
         map.resize(worldWidth, std::vector<std::vector<int>>(worldHeight, std::vector<int>(worldDepth, 0)));
@@ -117,9 +126,10 @@ public:
         setupBuffers();
     }
 
-    // 初始化VAO VBO缓冲区
+    // 初始化VAO VBO EBO
     void setupBuffers() {
         std::vector<float> vertices;
+        std::vector<unsigned int> indices;
 
         // 遍历地图生成所有方块的顶点数据
         for (int x = 0; x < worldWidth; ++x) {
@@ -127,40 +137,49 @@ public:
                 for (int z = 0; z < worldDepth; ++z) {
                     std::vector<float> cubeVertices = getCubeVertices(x, y, z, getBlock(x, y, z));
                     vertices.insert(vertices.end(), cubeVertices.begin(), cubeVertices.end());
+
+                    // 每个方块需要添加的索引
+                    int indexOffset = vertices.size() / attributesPerVertex - 24;
+
+                    for (auto& index : blockIndices) {
+                        indices.push_back(index + indexOffset);
+                    }
+                    
                 }
             }
         }
 
-        // 生成 VAO 和 VBO
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
 
         glBindVertexArray(VAO);
 
+        // 顶点缓冲区
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
-        // 顶点位置属性
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+        // 索引缓冲区
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+        // 设置顶点属性
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, attributesPerVertex * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
 
-        // 纹理坐标属性
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, attributesPerVertex * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
-        // 材质信息属性
-        glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(5 * sizeof(float)));
+        glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, attributesPerVertex * sizeof(float), (void*)(5 * sizeof(float)));
         glEnableVertexAttribArray(2);
 
         glBindVertexArray(0);
     }
 
     std::vector<float> getCubeVertices(float x, float y, float z, int blockType) {
-        std::vector<float> cubeVertices(blockStride);
-
         TextureType textureTypeTop;
         TextureType textureTypeSide; 
-        TextureType textureTypeBottom; 
+        TextureType textureTypeBottom;
 
         if (blockType == BlockType::BLOCK_AIR) { // 空气方块
             textureTypeTop = TextureType::TEXTURE_AIR;
@@ -183,56 +202,46 @@ public:
             textureTypeBottom = TextureType::OAK_LOG_LEAVES;
         }
 
-        // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置(0-2)、纹理坐标(3-4)和材质信息(5)
-        cubeVertices = {
-            // Front face (侧面纹理)
+        // 每个面包含4个顶点，每个顶点的数据包括：
+        // 位置 (x, y, z)，纹理坐标 (u, v)，材质类型
+        std::vector<float> cubeVertices = {
+            // Front face
             x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
-            x,     y + 1, z,     0.0f, 1.0f, float(textureTypeSide),
-            x + 1, y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
-            x + 1, y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
             x + 1, y,     z,     1.0f, 0.0f, float(textureTypeSide),
-            x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
+            x + 1, y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
+            x,     y + 1, z,     0.0f, 1.0f, float(textureTypeSide),
 
-            // Back face (侧面纹理)
+            // Back face
             x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
             x + 1, y,     z + 1, 1.0f, 0.0f, float(textureTypeSide),
             x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
-            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
             x,     y + 1, z + 1, 0.0f, 1.0f, float(textureTypeSide),
-            x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
 
-            // Left face (侧面纹理)
-            x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
-            x,     y + 1, z + 1, 0.0f, 1.0f, float(textureTypeSide),
-            x,     y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
-            x,     y + 1, z,     1.0f, 1.0f, float(textureTypeSide),
-            x,     y,     z,     1.0f, 0.0f, float(textureTypeSide),
-            x,     y,     z + 1, 0.0f, 0.0f, float(textureTypeSide),
+            // Left face
+            x,     y,     z,     0.0f, 0.0f, float(textureTypeSide),
+            x,     y + 1, z,     0.0f, 1.0f, float(textureTypeSide),
+            x,     y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
+            x,     y,     z + 1, 1.0f, 0.0f, float(textureTypeSide),
 
-            // Right face (侧面纹理)
+            // Right face
             x + 1, y,     z,     0.0f, 0.0f, float(textureTypeSide),
             x + 1, y + 1, z,     0.0f, 1.0f, float(textureTypeSide),
             x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
-            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeSide),
             x + 1, y,     z + 1, 1.0f, 0.0f, float(textureTypeSide),
-            x + 1, y,     z,     0.0f, 0.0f, float(textureTypeSide),
 
-            // Top face (顶部纹理)
+            // Top face
             x,     y + 1, z,     0.0f, 0.0f, float(textureTypeTop),
-            x,     y + 1, z + 1, 0.0f, 1.0f, float(textureTypeTop),
-            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeTop),
-            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeTop),
             x + 1, y + 1, z,     1.0f, 0.0f, float(textureTypeTop),
-            x,     y + 1, z,     0.0f, 0.0f, float(textureTypeTop),
+            x + 1, y + 1, z + 1, 1.0f, 1.0f, float(textureTypeTop),
+            x,     y + 1, z + 1, 0.0f, 1.0f, float(textureTypeTop),
 
-            // Bottom face (底部纹理)
+            // Bottom face
             x,     y,     z,     0.0f, 0.0f, float(textureTypeBottom),
             x + 1, y,     z,     1.0f, 0.0f, float(textureTypeBottom),
             x + 1, y,     z + 1, 1.0f, 1.0f, float(textureTypeBottom),
-            x + 1, y,     z + 1, 1.0f, 1.0f, float(textureTypeBottom),
             x,     y,     z + 1, 0.0f, 1.0f, float(textureTypeBottom),
-            x,     y,     z,     0.0f, 0.0f, float(textureTypeBottom),
         };
+
         return cubeVertices;
     }
 
@@ -343,7 +352,7 @@ public:
         glBindVertexArray(VAO);
 
         // 使用三角形模式绘制
-        glDrawArrays(GL_TRIANGLES, 0, 36*worldWidth*worldHeight*worldDepth); // 每个方块有6*6=36个顶点
+        glDrawElements(GL_TRIANGLES, blockIndices.size() * worldWidth * worldHeight * worldDepth, GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(0);
     }
@@ -405,6 +414,7 @@ public:
         
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferSubData(GL_ARRAY_BUFFER, offset, blockVertices.size() * sizeof(float), blockVertices.data());
         glBindVertexArray(0);
     }
