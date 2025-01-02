@@ -483,7 +483,6 @@ public:
 
             setBlock(x, y, z, type);
         }
-        std::cout << "vaoSize: " << vaoSize << std::endl;
     }
 
 

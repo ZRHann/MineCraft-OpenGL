@@ -151,7 +151,8 @@ int main() {
 
         // 更新摄像机视角
         glm::mat4 view = player.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), windowWidth / windowHeight, 0.1f, 100.0f);
+        // 投影矩阵，无穷远投影
+        glm::mat4 projection = glm::infinitePerspective(glm::radians(45.0f), windowWidth / windowHeight, 0.01f);
 
         // 绘制地图和准心        
         world.render(view, projection);
