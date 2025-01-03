@@ -101,7 +101,7 @@ public:
         // Add biome noise
         FastNoiseLite biomeNoise;
         biomeNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-        biomeNoise.SetFrequency(0.02f);  // Lower frequency for larger biomes
+        biomeNoise.SetFrequency(0.005f);  // Lower frequency for larger biomes
         biomeNoise.SetSeed(rand32());
 
         for (int x = 0; x < worldWidth; ++x) {
@@ -111,7 +111,7 @@ public:
                 // 映射噪声值到 [0, 1]
                 float normalizedNoise = (noiseValue + 1.0f) / 2.0f;
                 float biomeValue = biomeNoise.GetNoise((float)x, (float)z);
-                bool isDesert = biomeValue > 0.5f; // 调整阈值来控制沙漠大小
+                bool isDesert = biomeValue > 0.2f; // 调整阈值来控制沙漠大小
 
                 // 根据映射后的噪声值计算高度
                 int terrainHeight;
