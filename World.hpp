@@ -97,27 +97,63 @@ public:
         int perlinSeed = rand32();
         noise.SetSeed(perlinSeed);  // 设置种子
 
+        // Add biome noise
+        FastNoiseLite biomeNoise;
+        biomeNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+        biomeNoise.SetFrequency(0.02f);  // Lower frequency for larger biomes
+        biomeNoise.SetSeed(rand32());
+
         for (int x = 0; x < worldWidth; ++x) {
             for (int z = 0; z < worldDepth; ++z) {
                 float noiseValue = noise.GetNoise((float)x, (float)z);  // 获取噪声值 [-1, 1]
 
                 // 映射噪声值到 [0, 1]
                 float normalizedNoise = (noiseValue + 1.0f) / 2.0f;
+                float biomeValue = biomeNoise.GetNoise((float)x, (float)z);
+                bool isDesert = biomeValue > 0.5f; // 调整阈值来控制沙漠大小
 
                 // 根据映射后的噪声值计算高度
-                int terrainHeight = (int)(normalizedNoise * (worldHeight - maxTreeHeight - 1)) + 1; // 高度范围 [1, worldHeight - maxTreeHeight]
-                terrainHeight = std::max(terrainHeight, 1);  // 最小高度为1
-                // 设置草方块
+                int terrainHeight;
+                if (isDesert) {
+                    terrainHeight = (int)(normalizedNoise * 5) + worldHeight / 4; // 沙漠地形更平坦
+                } else {
+                   terrainHeight = (int)(normalizedNoise * (worldHeight - maxTreeHeight - 1)) + 1; // 高度范围 [1, worldHeight - maxTreeHeight]
+                }
+                terrainHeight = std::max(terrainHeight, 1); // 最小高度为1
+
                 for (int y = 0; y < worldHeight; ++y) {
                     if (y < terrainHeight) {
-                        setBlock(x, y, z, BlockType::GRASS_BLOCK);  // 地面方块
+                        if (isDesert) {
+                            if (y == terrainHeight - 1 || y > terrainHeight - 4) {
+                                // 沙漠表层放置沙块
+                                setBlock(x, y, z, BlockType::SAND_BLOCK);
+                            } else {
+                                // 底层依然是石头
+                                setBlock(x, y, z, BlockType::STONE_BLOCK);
+                            }
+                        }else {
+                            // 普通地形生成
+                            // 地表放置草方块
+                            if (y == terrainHeight - 1) {
+                                setBlock(x, y, z, BlockType::GRASS_BLOCK);
+                            } else if (y > terrainHeight - 4) {
+                            // 地表下方放置泥土方块
+                                setBlock(x, y, z, BlockType::DIRT_BLOCK);
+                            } else {
+                            // 其余部分放置石头方块
+                                setBlock(x, y, z, BlockType::STONE_BLOCK);
+                            }
+                        }
                     }
                 }
-                // 随机生成树木
-                const float treeDensity = 0.001f;
-                if (terrainHeight > 1 && rand32() % 10000 < treeDensity * 10000) {
-                    if (canPlaceTree(x, z)) {
-                        placeTree(x, terrainHeight, z);
+
+                // 只在非沙漠生物群系生成树木
+                if (!isDesert) {
+                    const float treeDensity = 0.001f;
+                    if (terrainHeight > 1 && rand32() % 10000 < treeDensity * 10000) {
+                        if (canPlaceTree(x, z)) {
+                            placeTree(x, terrainHeight, z);
+                        }
                     }
                 }
             }
@@ -200,6 +236,30 @@ public:
             textureTypeTop = TextureType::OAK_LOG_LEAVES;
             textureTypeSide = TextureType::OAK_LOG_LEAVES;
             textureTypeBottom = TextureType::OAK_LOG_LEAVES;
+        }else if (blockType == BlockType::STONE_BLOCK) { // 石头方块
+            textureTypeTop = TextureType::TEXTURE_STONE;
+            textureTypeSide = TextureType::TEXTURE_STONE;
+            textureTypeBottom = TextureType::TEXTURE_STONE;
+        }else if (blockType == BlockType::DIRT_BLOCK) { // 泥土方块
+            textureTypeTop = TextureType::TEXTURE_DIRT;
+            textureTypeSide = TextureType::TEXTURE_DIRT;
+            textureTypeBottom = TextureType::TEXTURE_DIRT;
+        }else if (blockType == BlockType::SAND_BLOCK){ // 沙子方块
+            textureTypeTop = TextureType::TEXTURE_SAND;
+            textureTypeSide = TextureType::TEXTURE_SAND;
+            textureTypeBottom = TextureType::TEXTURE_SAND;
+        }else if (blockType == BlockType::GLASS_BLOCK) { // 玻璃方块
+            textureTypeTop = TextureType::TEXTURE_GLASS;
+            textureTypeSide = TextureType::TEXTURE_GLASS;
+            textureTypeBottom = TextureType::TEXTURE_GLASS;
+        }else if(blockType == BlockType::OAK_PLANKS) { // 橡木板方块
+            textureTypeTop = TextureType::TEXTURE_OAK_PLANKS;
+            textureTypeSide = TextureType::TEXTURE_OAK_PLANKS;
+            textureTypeBottom = TextureType::TEXTURE_OAK_PLANKS;
+        }else if(blockType == BlockType::STONE_BRICKS) { // 石砖方块
+            textureTypeTop = TextureType::TEXTURE_STONE_BRICKS;
+            textureTypeSide = TextureType::TEXTURE_STONE_BRICKS;
+            textureTypeBottom = TextureType::TEXTURE_STONE_BRICKS;
         }
 
         // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置(0-2)、纹理坐标(3-4)和材质信息(5)
