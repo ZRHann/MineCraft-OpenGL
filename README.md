@@ -1,3 +1,4 @@
+中山大学2024年计算机图形学大作业（陶钧老师）
 ### 硬件
  - 需要一定性能的游戏显卡
 
@@ -9,7 +10,7 @@
 https://github.com/Faithful-Pack/Default-Java/tree/1.19.3/assets/minecraft/textures/block
 
 ### TODO
- - 优化渲染性能（识别热点，视锥裁剪...）
+ - 优化渲染性能（视锥裁剪...）
 
 ### 构建 
 
@@ -22,6 +23,11 @@ make # 或 mingw32-make
 make run
 ```
 如遇到问题，也可直接使用`run.bat`编译运行，但编译速度较慢。
+
+### 详细报告
+https://github.com/ZRHann/MineCraft-OpenGL/blob/main/docs/report.md
+
+### 截图
 
 ![image-20250103174150520](README.assets/image-20250103174150520.png)
 
