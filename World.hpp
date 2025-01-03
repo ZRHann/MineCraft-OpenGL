@@ -90,66 +90,94 @@ public:
         return BlockType::BLOCK_AIR;
     }
 
-    // 生成随机地图
     void generateWorldMap() {
-        FastNoiseLite noise;
-        noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-        noise.SetFrequency(0.04f);  // 设置频率, 越低越平滑
-        int perlinSeed = rand32();
-        noise.SetSeed(perlinSeed);  // 设置种子
+        FastNoiseLite terrainNoise;
+        terrainNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+        terrainNoise.SetFrequency(0.03f);
+        int terrainSeed = rand32();
+        terrainNoise.SetSeed(terrainSeed);
 
-        // Add biome noise
         FastNoiseLite biomeNoise;
         biomeNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
-        biomeNoise.SetFrequency(0.005f);  // Lower frequency for larger biomes
+        biomeNoise.SetFrequency(0.01f);
         biomeNoise.SetSeed(rand32());
 
+        FastNoiseLite dirtNoise;
+        dirtNoise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+        dirtNoise.SetFrequency(0.15f);
+        dirtNoise.SetSeed(rand32());
+
+        // 初始化高度数组
+        std::vector<std::vector<int>> heightMap(worldWidth, std::vector<int>(worldDepth, 0));
+
+        // 第一步：生成原始地形高度
         for (int x = 0; x < worldWidth; ++x) {
             for (int z = 0; z < worldDepth; ++z) {
-                float noiseValue = noise.GetNoise((float)x, (float)z);  // 获取噪声值 [-1, 1]
+                float terrainValue = terrainNoise.GetNoise((float)x, (float)z);
+                float normalizedTerrain = (terrainValue + 1.0f) / 2.0f;
 
-                // 映射噪声值到 [0, 1]
-                float normalizedNoise = (noiseValue + 1.0f) / 2.0f;
                 float biomeValue = biomeNoise.GetNoise((float)x, (float)z);
-                bool isDesert = biomeValue > 0.2f; // 调整阈值来控制沙漠大小
+                bool isBasin = biomeValue > 0.2f;
 
-                // 根据映射后的噪声值计算高度
-                int terrainHeight;
-                if (isDesert) {
-                    terrainHeight = (int)(normalizedNoise * (worldHeight / 4 - 1)) + 1; // 沙漠 [1, worldHeight/4]
-                } else {
-                   terrainHeight = (int)(normalizedNoise * (worldHeight - 1)) + 1; // 高度范围 [1, worldHeight]
-                }
-                terrainHeight = std::max(terrainHeight, 1); // 最小高度为1
+                int terrainHeight = isBasin
+                    ? (int)(normalizedTerrain * (worldHeight / 4 - 1)) + 1 // [1, worldHeight/4]
+                    : (int)(normalizedTerrain * (worldHeight - 1)) + 1;    // [1, worldHeight]
 
-                for (int y = 0; y < worldHeight; ++y) {
-                    if (y < terrainHeight) {
-                        if (isDesert) {
-                            if (y == terrainHeight - 1 || y > terrainHeight - 4) {
-                                // 沙漠表层放置沙块
-                                setBlock(x, y, z, BlockType::SAND_BLOCK);
-                            } else {
-                                // 底层依然是石头
-                                setBlock(x, y, z, BlockType::STONE_BLOCK);
-                            }
-                        }else {
-                            // 普通地形生成
-                            // 地表放置草方块
-                            if (y == terrainHeight - 1) {
-                                setBlock(x, y, z, BlockType::GRASS_BLOCK);
-                            } else if (y > terrainHeight - 4) {
-                            // 地表下方放置泥土方块
-                                setBlock(x, y, z, BlockType::DIRT_BLOCK);
-                            } else {
-                            // 其余部分放置石头方块
-                                setBlock(x, y, z, BlockType::STONE_BLOCK);
+                terrainHeight = std::max(terrainHeight, 1);
+                heightMap[x][z] = terrainHeight;
+            }
+        }
+
+        // 第二步：平滑地形高度
+        const int maxDelta = 2; // 相邻高度的最大差值
+        const int iterations = 3; // 平滑扫描次数
+
+        for (int iter = 0; iter < iterations; ++iter) {
+            std::vector<std::vector<int>> newHeightMap = heightMap; // 临时存储新的高度值
+
+            for (int x = 1; x < worldWidth - 1; ++x) {
+                for (int z = 1; z < worldDepth - 1; ++z) {
+                    int& currentHeight = heightMap[x][z];
+
+                    for (int dx = -1; dx <= 1; ++dx) {
+                        for (int dz = -1; dz <= 1; ++dz) {
+                            if (dx == 0 && dz == 0) continue;
+                            int neighborHeight = heightMap[x + dx][z + dz];
+                            if (std::abs(currentHeight - neighborHeight) > maxDelta) {
+                                // 平均高度并更新到临时高度图
+                                newHeightMap[x][z] = (currentHeight + neighborHeight) / 2;
                             }
                         }
                     }
                 }
+            }
 
-                // 只在非沙漠生物群系生成树木
-                if (!isDesert) {
+            // 更新原始高度图
+            heightMap = newHeightMap;
+        }
+
+        // 第三步：生成方块和树
+        for (int x = 0; x < worldWidth; ++x) {
+            for (int z = 0; z < worldDepth; ++z) {
+                int terrainHeight = heightMap[x][z];
+                float dirtValue = dirtNoise.GetNoise((float)x, (float)z);
+                int dirtDepth = (int)((dirtValue + 1.0f) / 2.0f * terrainHeight / 2) + maxDelta; // [maxDelta, terrainHeight/2 + maxDelta]
+
+                for (int y = 0; y < worldHeight; ++y) {
+                    if (y < terrainHeight) {
+                        if (y == terrainHeight - 1) {
+                            setBlock(x, y, z, BlockType::GRASS_BLOCK);
+                        } else if (y >= terrainHeight - dirtDepth) {
+                            setBlock(x, y, z, BlockType::DIRT_BLOCK);
+                        } else {
+                            setBlock(x, y, z, BlockType::STONE_BLOCK);
+                        }
+                    }
+                }
+
+                float biomeValue = biomeNoise.GetNoise((float)x, (float)z);
+                bool isBasin = biomeValue > 0.2f;
+                if (!isBasin) {
                     const float treeDensity = 0.001f;
                     if (rand32() % 10000 < treeDensity * 10000) {
                         if (canPlaceTree(x, z, terrainHeight)) {
@@ -159,8 +187,10 @@ public:
                 }
             }
         }
+
         setupBuffers();
     }
+
 
     void setupBuffers() {
         std::cout << "[INFO] Setting up buffers..." << std::endl;

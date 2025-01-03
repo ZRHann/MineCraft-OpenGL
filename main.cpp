@@ -50,8 +50,8 @@ void initOpenGLSettings() {
     glEnable(GL_DEPTH_TEST);
 
     // 背面剔除
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    // glEnable(GL_CULL_FACE);
+    // glCullFace(GL_BACK);
 
     // 透明混合
     // glEnable(GL_BLEND);

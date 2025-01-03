@@ -133,6 +133,7 @@ public:
                 }
                 if (key == GLFW_KEY_TAB) {
                     isSpectatorMode = !isSpectatorMode;
+                    isFlying = true;
                 }
             } else if (action == GLFW_RELEASE) {
                 keys[key] = false;
