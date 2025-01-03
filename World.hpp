@@ -130,7 +130,7 @@ public:
 
         // 第二步：平滑地形高度
         const int maxDelta = 2; // 相邻高度的最大差值
-        const int iterations = 3; // 平滑扫描次数
+        const int iterations = 4; // 平滑扫描次数
 
         for (int iter = 0; iter < iterations; ++iter) {
             std::vector<std::vector<int>> newHeightMap = heightMap; // 临时存储新的高度值
@@ -142,10 +142,11 @@ public:
                     for (int dx = -1; dx <= 1; ++dx) {
                         for (int dz = -1; dz <= 1; ++dz) {
                             if (dx == 0 && dz == 0) continue;
+
                             int neighborHeight = heightMap[x + dx][z + dz];
-                            if (std::abs(currentHeight - neighborHeight) > maxDelta) {
-                                // 平均高度并更新到临时高度图
-                                newHeightMap[x][z] = (currentHeight + neighborHeight) / 2;
+                            if (currentHeight < neighborHeight - maxDelta) {
+                                // 只调整较低点，提升到允许范围内
+                                newHeightMap[x][z] = currentHeight + (neighborHeight - currentHeight) / 2;
                             }
                         }
                     }
