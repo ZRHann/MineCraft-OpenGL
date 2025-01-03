@@ -8,5 +8,7 @@ enum BlockType {
     DIRT_BLOCK,  
     STONE_BLOCK, 
     SAND_BLOCK,
-    GLASS_BLOCK
+    GLASS_BLOCK,
+    OAK_PLANKS,
+    STONE_BRICKS
 };

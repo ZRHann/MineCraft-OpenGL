@@ -237,6 +237,14 @@ public:
             textureTypeTop = TextureType::TEXTURE_GLASS;
             textureTypeSide = TextureType::TEXTURE_GLASS;
             textureTypeBottom = TextureType::TEXTURE_GLASS;
+        }else if(blockType == BlockType::OAK_PLANKS) { // 橡木板方块
+            textureTypeTop = TextureType::TEXTURE_OAK_PLANKS;
+            textureTypeSide = TextureType::TEXTURE_OAK_PLANKS;
+            textureTypeBottom = TextureType::TEXTURE_OAK_PLANKS;
+        }else if(blockType == BlockType::STONE_BRICKS) { // 石砖方块
+            textureTypeTop = TextureType::TEXTURE_STONE_BRICKS;
+            textureTypeSide = TextureType::TEXTURE_STONE_BRICKS;
+            textureTypeBottom = TextureType::TEXTURE_STONE_BRICKS;
         }
 
         // 每个面由两个三角形组成，总共36个顶点，每个顶点包含位置(0-2)、纹理坐标(3-4)和材质信息(5)

@@ -19,6 +19,8 @@ enum TextureType {
     TEXTURE_STONE,
     TEXTURE_SAND,
     TEXTURE_GLASS,
+    TEXTURE_OAK_PLANKS,
+    TEXTURE_STONE_BRICKS,
     TEXTURE_COUNT
 };
 
@@ -35,7 +37,9 @@ public:
         "assets/stone.png",
         "assets/dirt.png",
         "assets/sand.png",
-        "assets/glass.png"
+        "assets/glass.png",
+        "assets/oak_planks.png",
+        "assets/stone_bricks.png",
     };
 
     TextureManager() : textureArrayID(0) {}
@@ -148,6 +152,10 @@ int getTextureLayer(BlockType type) {
             return 9;  // sand.png
         case BlockType::GLASS_BLOCK:
             return 10; // glass.png
+        case BlockType::OAK_PLANKS:
+            return 11; // oak_planks.png
+        case BlockType::STONE_BRICKS:
+            return 12; // stone_bricks.png
         default:
             return 0;
     }

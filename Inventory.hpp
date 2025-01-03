@@ -9,7 +9,7 @@
 
 class Inventory {
 private:
-    static const int INVENTORY_SIZE = 9; // 物品栏大小
+    static const int INVENTORY_SIZE = 16; // 物品栏大小
     static const int VISIBLE_SLOTS = 7;  // 一次显示的槽位数量
     static constexpr float SLOT_WIDTH = 40;  // 槽位宽度
     static constexpr float SLOT_SPACING = 10;  // 槽位间距
@@ -27,6 +27,8 @@ public:
         slots[4] = BlockType::DIRT_BLOCK; // 第五个槽位放置泥土方块
         slots[5] = BlockType::SAND_BLOCK; // 第六个槽位放置沙子方块
         slots[6] = BlockType::GLASS_BLOCK; // 第七个槽位放置玻璃方块
+        slots[7] = BlockType::OAK_PLANKS; // 第八个槽位放置橡木板方块
+        slots[8] = BlockType::STONE_BRICKS; // 第九个槽位放置石砖方块
         
         createTextureViews(textureManager);
         
