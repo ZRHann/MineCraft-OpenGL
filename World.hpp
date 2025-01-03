@@ -116,9 +116,9 @@ public:
                 // 根据映射后的噪声值计算高度
                 int terrainHeight;
                 if (isDesert) {
-                    terrainHeight = (int)(normalizedNoise * 5) + worldHeight / 4; // 沙漠地形更平坦
+                    terrainHeight = (int)(normalizedNoise * (worldHeight / 4 - 1)) + 1; // 沙漠 [1, worldHeight/4]
                 } else {
-                   terrainHeight = (int)(normalizedNoise * (worldHeight - maxTreeHeight - 1)) + 1; // 高度范围 [1, worldHeight - maxTreeHeight]
+                   terrainHeight = (int)(normalizedNoise * (worldHeight - 1)) + 1; // 高度范围 [1, worldHeight]
                 }
                 terrainHeight = std::max(terrainHeight, 1); // 最小高度为1
 
@@ -151,8 +151,8 @@ public:
                 // 只在非沙漠生物群系生成树木
                 if (!isDesert) {
                     const float treeDensity = 0.001f;
-                    if (terrainHeight > 1 && rand32() % 10000 < treeDensity * 10000) {
-                        if (canPlaceTree(x, z)) {
+                    if (rand32() % 10000 < treeDensity * 10000) {
+                        if (canPlaceTree(x, z, terrainHeight)) {
                             placeTree(x, terrainHeight, z);
                         }
                     }
@@ -325,17 +325,22 @@ public:
         return cubeVertices;
     }
 
-    bool canPlaceTree(int x, int z) {
-        int treeSpacing = 5; // 树木间隔
+    bool canPlaceTree(int x, int z, int terrainHeight) {
+        const int treeSpacing = 5; // 树木间隔
 
-        // 遍历以 (x, z) 为中心的间隔范围
+        // 如果树的顶部超出世界高度，返回 false
+        if (terrainHeight + maxTreeHeight >= worldHeight) {
+            return false;
+        }
+
+        // 遍历以 (x, z) 为中心的间隔范围，检查树木间隔
         for (int dx = -treeSpacing; dx <= treeSpacing; ++dx) {
             for (int dz = -treeSpacing; dz <= treeSpacing; ++dz) {
                 if (x + dx >= 0 && x + dx < worldWidth && z + dz >= 0 && z + dz < worldDepth) {
-                    // 遍历 y 轴，检查整列是否有树干
+                    // 检查区域内是否已经有树
                     for (int y = 0; y < worldHeight; ++y) {
-                        if (getBlock(x + dx, y, z + dz) == BlockType::OAK_LOG || 
-                            getBlock(x + dx, y, z + dz) == BlockType::OAK_LEAVES) { 
+                        BlockType blockType = getBlock(x + dx, y, z + dz);
+                        if (blockType == BlockType::OAK_LOG || blockType == BlockType::OAK_LEAVES) {
                             return false; // 如果检测到树干或树叶，返回 false
                         }
                     }
