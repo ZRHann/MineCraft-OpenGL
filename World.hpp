@@ -23,6 +23,7 @@ public:
     const int attributesPerVertex = 6;
     const int blockStride = vertexCountPerBlock * attributesPerVertex;
     const int maxTreeHeight = 7; // 树木最大高度
+    const int GPUBufferLimit = 1024; // GPU缓冲区大小限制 MB
     int worldWidth, worldHeight, worldDepth; // 地图的最大尺寸
     int worldSeed; // 地图种子
     ParticleSystem particleSystem; // 粒子系统
@@ -64,7 +65,7 @@ public:
         srand(time(nullptr));
         worldSeed = rand32();
         srand(worldSeed);
-        std::cout << "World Seed: " << worldSeed << std::endl;
+        std::cout << "[INFO] World Seed: " << worldSeed << std::endl;
 
         blockVAOIndices.resize(worldWidth * worldHeight * worldDepth, -1); 
     }
@@ -162,9 +163,10 @@ public:
     }
 
     void setupBuffers() {
-        std::vector<float> vertices;
-        int maxVertices = worldWidth * worldHeight * worldDepth * vertexCountPerBlock * attributesPerVertex;
-        vertices.reserve(maxVertices);
+        std::cout << "[INFO] Setting up buffers..." << std::endl;
+        const int maxVertices = worldWidth * worldHeight * worldDepth * vertexCountPerBlock * attributesPerVertex;
+        std::vector<float> vertices; // 用于存储可见方块的顶点数据（临时使用）
+
         // 遍历方块，生成可见方块的顶点数据
         for (int x = 0; x < worldWidth; ++x) {
             for (int y = 0; y < worldHeight; ++y) {
@@ -193,9 +195,16 @@ public:
 
         glBindVertexArray(VAO);
 
+        // 在 GPU 上分配缓冲区大小，但不从 CPU 上传所有数据
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, maxVertices * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
+        glBufferData(GL_ARRAY_BUFFER, GPUBufferLimit * 1024 * 1024, nullptr, GL_STATIC_DRAW);
+        
+        // 如果有初始数据，仅上传当前已有的部分
+        if (!vertices.empty()) {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
+        }
+        std::cout << "[INFO] GPU Buffer Limit: " << GPUBufferLimit << " MB" << std::endl;
+        std::cout << "[INFO] GPU Current Buffer size: " << vertices.size() * sizeof(float) / 1024.0 / 1024.0 << " MB" << std::endl;
         // 设置顶点属性
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
@@ -207,6 +216,7 @@ public:
         glEnableVertexAttribArray(2);
 
         glBindVertexArray(0);
+        std::cout << "[INFO] Buffers set up successfully." << std::endl;
     }
 
 
@@ -425,7 +435,6 @@ public:
         glDrawArrays(GL_TRIANGLES, 0, vaoSize * vertexCountPerBlock); // 每个方块有6*6=36个顶点
 
         glBindVertexArray(0);
-
     }
 
     // 检测选中的方块
