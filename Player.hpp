@@ -131,6 +131,9 @@ public:
                 if (key == GLFW_KEY_E) {
                     inventory.scrollSlot(-1); // 向右切换
                 }
+                if (key == GLFW_KEY_TAB) {
+                    isSpectatorMode = !isSpectatorMode;
+                }
             } else if (action == GLFW_RELEASE) {
                 keys[key] = false;
                 // 松开左 Ctrl 键
@@ -357,9 +360,4 @@ public:
         this->inventory.render();
     }
 
-    void updatePlayerMode(){
-        if (keys[GLFW_KEY_TAB]) {
-            isSpectatorMode = !isSpectatorMode;
-        }
-    }
 };
