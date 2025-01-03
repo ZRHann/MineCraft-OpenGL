@@ -15,6 +15,10 @@ enum TextureType {
     OAK_LOG_TOP,
     OAK_LOG_SIDE,
     OAK_LOG_LEAVES,
+    TEXTURE_DIRT,  
+    TEXTURE_STONE,
+    TEXTURE_SAND,
+    TEXTURE_GLASS,
     TEXTURE_COUNT
 };
 
@@ -27,7 +31,11 @@ public:
         "assets/grass_block_bottom.png",
         "assets/oak_log_top.png",
         "assets/oak_log_side.png",
-        "assets/azalea_leaves.png"
+        "assets/azalea_leaves.png",
+        "assets/stone.png",
+        "assets/dirt.png",
+        "assets/sand.png",
+        "assets/glass.png"
     };
 
     TextureManager() : textureArrayID(0) {}
@@ -128,10 +136,18 @@ int getTextureLayer(BlockType type) {
             return 0;  // Empty texture layer
         case BlockType::GRASS_BLOCK:
             return 1;  // grass_block_top.png
+        case BlockType::DIRT_BLOCK: 
+            return 7;  // dirt.png
+        case BlockType::STONE_BLOCK:
+            return 8;  // stone.png  
         case BlockType::OAK_LOG:
             return 4;  // oak_log_top.png
         case BlockType::OAK_LEAVES:
             return 6;  // azalea_leaves.png
+        case BlockType::SAND_BLOCK:
+            return 9;  // sand.png
+        case BlockType::GLASS_BLOCK:
+            return 10; // glass.png
         default:
             return 0;
     }
