@@ -230,6 +230,10 @@ int main() {
         player.updatePosition(deltaTime);
         DEBUG_LOG("[DEBUG] Updated player position");
 
+        // 更新玩家其它状态
+        player.updatePlayerMode();
+        DEBUG_LOG("[DEBUG] Updated other player states");
+
         // 处理事件, 如键鼠输入
         glfwPollEvents();
         DEBUG_LOG("[DEBUG] Polled events");

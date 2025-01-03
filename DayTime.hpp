@@ -6,7 +6,7 @@
 #define PI 3.14159265358979323846
 
 namespace DayTime {
-    const float dayLength = 100.0f;     // 一天的长度(s)
+    const float dayLength = 200.0f;     // 一天的长度(s)
     static float currentTime = dayLength / 2;   // 当前时间
     // 更新时间
     void update(float deltaTime) {

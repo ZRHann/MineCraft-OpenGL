@@ -32,6 +32,8 @@ private:
     const float doubleClickTime = 0.3f;      // 双击判定时间间隔（秒）
     bool lastSpaceState = false;             // 上一帧 Space 键的状态
 
+    bool isSpectatorMode = false; // 是否处于观察者模式
+
     const float cameraHeight = 1.62f; // 摄像机高度
     const float playerHeight = 1.8f;  // 玩家高度
     const float halfPlayerWidth = 0.3f; // 玩家宽度的一半
@@ -128,15 +130,6 @@ public:
                 }
                 if (key == GLFW_KEY_E) {
                     inventory.scrollSlot(-1); // 向右切换
-                }
-                if (key == GLFW_KEY_1) {
-                    inventory.setSelectedSlot(0);
-                }
-                if (key == GLFW_KEY_2) {
-                    inventory.setSelectedSlot(1);
-                }
-                if (key == GLFW_KEY_3) {
-                    inventory.setSelectedSlot(2);
                 }
             } else if (action == GLFW_RELEASE) {
                 keys[key] = false;
@@ -262,41 +255,43 @@ public:
         // 基于速度计算潜在的新位置
         glm::vec3 potentialPosition = position + velocity * deltaTime;
 
-        // 逐方向碰撞检测
-        glm::vec3 nextPosition = position;
-
-        
-        // X方向
-        nextPosition.x = potentialPosition.x;
-        glm::vec3 minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
-        glm::vec3 maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
-        if (world.isColliding(minBound, maxBound)) {
-            nextPosition.x = position.x; // 恢复原位置
-            velocity.x = 0.0f;           // 停止X方向速度
-        }
-
-        // Z方向
-        nextPosition.z = potentialPosition.z;
-        minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
-        maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
-        if (world.isColliding(minBound, maxBound)) {
-            nextPosition.z = position.z; // 恢复原位置
-            velocity.z = 0.0f;           // 停止Z方向速度
-        }
-
-        // Y方向
-        nextPosition.y = potentialPosition.y;
-        minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
-        maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
-        if (world.isColliding(minBound, maxBound)) {
-            if (velocity.y < 0.0f) { // 如果正在下降
-                velocity.y = 0.0f;  // 停止Y方向速度
+        if (!isSpectatorMode) {
+            // 逐方向碰撞检测
+            glm::vec3 nextPosition = position;
+            // X方向
+            nextPosition.x = potentialPosition.x;
+            glm::vec3 minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
+            glm::vec3 maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
+            if (world.isColliding(minBound, maxBound)) {
+                nextPosition.x = position.x; // 恢复原位置
+                velocity.x = 0.0f;           // 停止X方向速度
             }
-            nextPosition.y = position.y; // 恢复原位置
+
+            // Z方向
+            nextPosition.z = potentialPosition.z;
+            minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
+            maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
+            if (world.isColliding(minBound, maxBound)) {
+                nextPosition.z = position.z; // 恢复原位置
+                velocity.z = 0.0f;           // 停止Z方向速度
+            }
+
+            // Y方向
+            nextPosition.y = potentialPosition.y;
+            minBound = nextPosition - glm::vec3(halfPlayerWidth, cameraHeight, halfPlayerWidth);
+            maxBound = nextPosition + glm::vec3(halfPlayerWidth, playerHeight - cameraHeight, halfPlayerWidth);
+            if (world.isColliding(minBound, maxBound)) {
+                if (velocity.y < 0.0f) { // 如果正在下降
+                    velocity.y = 0.0f;  // 停止Y方向速度
+                }
+                nextPosition.y = position.y; // 恢复原位置
+            }
+            // 更新最终位置
+            position = nextPosition;
         }
-        
-        // 更新最终位置
-        position = nextPosition;
+        else {
+            position = potentialPosition;
+        }
             // std::cout << "velocity: " << velocity.x << " " << velocity.y << " " << velocity.z << std::endl;
             // std::cout << "position: " << position.x << " " << position.y << " " << position.z << std::endl;
     }
@@ -360,5 +355,11 @@ public:
 
     void inventory_render(){
         this->inventory.render();
+    }
+
+    void updatePlayerMode(){
+        if (keys[GLFW_KEY_TAB]) {
+            isSpectatorMode = !isSpectatorMode;
+        }
     }
 };
