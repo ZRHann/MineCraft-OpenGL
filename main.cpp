@@ -20,7 +20,7 @@
 const int MSAA_LEVEL = 16;      // 可选值: 0, 1, 2, 4, 8, 16 (默认: 0, 禁用 MSAA)
 const float ANISO_LEVEL = 16.0; // 可选值: 1.0, 2.0, 4.0, 8.0, 16.0 (默认: 1.0, 禁用各向异性过滤)
 float windowWidth = 1600.0f, windowHeight = 900.0f;  // 窗口大小
-int worldWidth = 256, worldHeight = 18, worldDepth = 256;  // 地图大小
+int worldWidth = 356, worldHeight = 28, worldDepth = 356;  // 地图大小
 
 // 错误回调函数
 void error_callback(int error, const char* description) {

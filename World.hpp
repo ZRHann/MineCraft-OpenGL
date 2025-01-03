@@ -28,6 +28,7 @@ public:
     ParticleSystem particleSystem; // 粒子系统
     TextureManager textureManager; // 纹理管理器
     std::vector<std::vector<std::vector<int>>> map; // 方块类型的3D数组
+    std::vector<std::vector<std::vector<bool>>> visibleBlocks;
 
     GLuint VAO, VBO;  
     Shader world_shader;    // 着色器
@@ -38,9 +39,18 @@ public:
     std::vector<int> airIndices;      // 空气方块的 VAO 索引池
     int vaoSize = 0;                  // 当前 VAO 中的有效方块数量
 
+    const int dirs[6][3] = {
+        { 1,  0,  0},  // +x
+        {-1,  0,  0},  // -x
+        { 0,  1,  0},  // +y
+        { 0, -1,  0},  // -y
+        { 0,  0,  1},  // +z
+        { 0,  0, -1},  // -z
+    };
+
     World(int w, int h, int d) : worldWidth(w), worldHeight(h), worldDepth(d),particleSystem(textureManager) {
         map.resize(worldWidth, std::vector<std::vector<int>>(worldHeight, std::vector<int>(worldDepth, 0)));
-
+        visibleBlocks.resize(worldWidth, std::vector<std::vector<bool>>(worldHeight, std::vector<bool>(worldDepth, false)));
 
         // 初始化着色器、纹理
         world_shader.createProgram("shaders/World.vert", "shaders/World.frag");
@@ -119,19 +129,24 @@ public:
         std::vector<float> vertices;
         int maxVertices = worldWidth * worldHeight * worldDepth * vertexCountPerBlock * attributesPerVertex;
         vertices.reserve(maxVertices);
+        // 遍历方块，生成可见方块的顶点数据
         for (int x = 0; x < worldWidth; ++x) {
             for (int y = 0; y < worldHeight; ++y) {
                 for (int z = 0; z < worldDepth; ++z) {
-                    BlockType blockType = getBlock(x, y, z);
-                    if (blockType == BlockType::BLOCK_AIR) continue;
+                    if (isBlockVisible(x, y, z)) {
+                        visibleBlocks[x][y][z] = true;
 
-                    // 添加方块顶点数据
-                    std::vector<float> cubeVertices = getCubeVertices(x, y, z, blockType);
-                    vertices.insert(vertices.end(), cubeVertices.begin(), cubeVertices.end());
+                        // 添加方块顶点数据
+                        BlockType blockType = getBlock(x, y, z);
+                        std::vector<float> cubeVertices = getCubeVertices(x, y, z, blockType);
+                        vertices.insert(vertices.end(), cubeVertices.begin(), cubeVertices.end());
 
-                    // 更新 blockVAOIndices
-                    int blockIndex = x * worldHeight * worldDepth + y * worldDepth + z;
-                    blockVAOIndices[blockIndex] = vaoSize++;  // 将 VAO 索引与方块索引对应
+                        // 更新 VAO 索引
+                        int blockIndex = x * worldHeight * worldDepth + y * worldDepth + z;
+                        blockVAOIndices[blockIndex] = vaoSize++;
+                    } else {
+                        visibleBlocks[x][y][z] = false;
+                    }
                 }
             }
         }
@@ -397,74 +412,43 @@ public:
     }
 
     void addBlock(int x, int y, int z, BlockType type) {
-        int blockIndex = x * worldHeight * worldDepth + y * worldDepth + z;
+        setBlock(x, y, z, type);
 
-        // 如果已有方块，直接更新类型
-        if (blockVAOIndices[blockIndex] != -1) {
-            std::cerr << "ERROR: Block already exists at (" << x << ", " << y << ", " << z << ")" << std::endl;
+        // 更新当前方块和周围邻居的可见性
+        updateVisibility(x, y, z);
+        for (auto& dir : dirs) {
+            updateVisibility(x + dir[0], y + dir[1], z + dir[2]);
+        }
+    }
+
+    void removeBlock(int x, int y, int z) {
+        // 检查边界
+        if (x < 0 || x >= worldWidth || y < 0 || y >= worldHeight || z < 0 || z >= worldDepth) {
             return;
         }
 
-        // 获取方块顶点数据
-        std::vector<float> blockVertices = getCubeVertices(x, y, z, type);
-
-        if (!airIndices.empty()) {
-            // 从空气池中复用一个 VAO 索引
-            int vaoIndex = airIndices.back();
-            airIndices.pop_back();
-
-            // 更新 VAO 数据
-            int offset = vaoIndex * blockStride * sizeof(float);
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
-            glBufferSubData(GL_ARRAY_BUFFER, offset, blockVertices.size() * sizeof(float), blockVertices.data());
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-            blockVAOIndices[blockIndex] = vaoIndex;
-        } else {
-            // 在 VAO 末尾追加
-            int vaoIndex = vaoSize++;
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
-            glBufferSubData(GL_ARRAY_BUFFER, vaoIndex * blockStride * sizeof(float), blockVertices.size() * sizeof(float), blockVertices.data());
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-            blockVAOIndices[blockIndex] = vaoIndex;
+        // 获取当前方块类型
+        BlockType currentType = getBlock(x, y, z);
+        if (currentType == BlockType::BLOCK_AIR) {
+            return; // 空气方块无需移除
         }
 
-        setBlock(x, y, z, type);
-    }
-
-
-    void removeBlock(int x, int y, int z) {
-        int blockIndex = x * worldHeight * worldDepth + y * worldDepth + z;
-        BlockType oldType = getBlock(x, y, z);
-        int vaoIndex = blockVAOIndices[blockIndex];
-        if (vaoIndex == -1) return;  // 空气方块，无需操作
-
         // 生成粒子效果
-        particleSystem.emit(glm::vec3(x + 0.5f, y + 0.5f, z + 0.5f), oldType);
+        glm::vec3 blockCenter(x + 0.5f, y + 0.5f, z + 0.5f);
+        particleSystem.emit(blockCenter, currentType);
 
-        // 更新 VAO 数据为空气
-        std::vector<float> airVertices = getCubeVertices(x, y, z, BlockType::BLOCK_AIR);
-        int offset = vaoIndex * blockStride * sizeof(float);
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferSubData(GL_ARRAY_BUFFER, offset, airVertices.size() * sizeof(float), airVertices.data());
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        airIndices.push_back(vaoIndex);  // 回收 VAO 索引
-        blockVAOIndices[blockIndex] = -1;
-
+        // 移除方块数据
         setBlock(x, y, z, BlockType::BLOCK_AIR);
+        updateVisibility(x, y, z);
+        for (auto& dir : dirs) {
+            updateVisibility(x + dir[0], y + dir[1], z + dir[2]);
+        }
     }
-
 
 
     void updateBlock(int x, int y, int z, BlockType type) {
-        int blockIndex = x * worldHeight * worldDepth + y * worldDepth + z;
-
         BlockType currentType = getBlock(x, y, z);
         if (currentType == type) return;
-
         if (currentType == BlockType::BLOCK_AIR) {
             // 空气变为其他方块
             addBlock(x, y, z, type);
@@ -472,16 +456,7 @@ public:
             // 非空气变为空气
             removeBlock(x, y, z);
         } else {
-            // 非空气之间切换
-            int vaoIndex = blockVAOIndices[blockIndex];
-            std::vector<float> blockVertices = getCubeVertices(x, y, z, type);
-
-            int offset = vaoIndex * blockStride * sizeof(float);
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
-            glBufferSubData(GL_ARRAY_BUFFER, offset, blockVertices.size() * sizeof(float), blockVertices.data());
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-            setBlock(x, y, z, type);
+            std::cerr << "ERROR: update but not add/remove NOT IMPLEMENTED" << std::endl;
         }
     }
 
@@ -616,8 +591,110 @@ public:
                 }
             }
         }
-
         return false; // 无碰撞
+    }
+
+    void addBlockToGPU(int x, int y, int z) {
+        int blockIndex = x * worldHeight * worldDepth + y * worldDepth + z;
+
+        // 如果方块已存在于 GPU 中，则直接返回
+        if (blockVAOIndices[blockIndex] != -1) return;
+
+        // 获取当前方块的顶点数据
+        std::vector<float> blockVertices = getCubeVertices(x, y, z, getBlock(x, y, z));
+
+        int vaoIndex;
+        if (!airIndices.empty()) {
+            // 如果有可复用的 VAO 索引，从空气池中取出
+            vaoIndex = airIndices.back();
+            airIndices.pop_back();
+
+            // 更新 VBO 数据
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBufferSubData(GL_ARRAY_BUFFER, vaoIndex * blockStride * sizeof(float), blockVertices.size() * sizeof(float), blockVertices.data());
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        } else {
+            // 如果没有可复用的 VAO 索引，则追加到当前 VAO 末尾
+            vaoIndex = vaoSize++;
+
+            // 更新 VBO 数据
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBufferSubData(GL_ARRAY_BUFFER, vaoIndex * blockStride * sizeof(float), blockVertices.size() * sizeof(float), blockVertices.data());
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+
+        // 更新 VAO 索引映射
+        blockVAOIndices[blockIndex] = vaoIndex;
+    }
+
+
+    void removeBlockFromGPU(int x, int y, int z) {
+        int blockIndex = x * worldHeight * worldDepth + y * worldDepth + z;
+        int vaoIndex = blockVAOIndices[blockIndex];
+
+        if (vaoIndex == -1) return; // 不在 GPU 中，无需移除
+
+        // 更新 VAO 数据为空气方块
+        std::vector<float> airVertices = getCubeVertices(x, y, z, BlockType::BLOCK_AIR);
+        int offset = vaoIndex * blockStride * sizeof(float);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferSubData(GL_ARRAY_BUFFER, offset, airVertices.size() * sizeof(float), airVertices.data());
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        // 回收 VAO 索引并更新映射
+        airIndices.push_back(vaoIndex);
+        blockVAOIndices[blockIndex] = -1;
+    }
+
+
+    // 方块是否未被遮挡
+    bool isBlockVisible(int x, int y, int z) {
+        BlockType type = getBlock(x, y, z);
+        // 空气直接不可见
+        if (type == BlockType::BLOCK_AIR) {
+            return false;
+        }
+
+        // 检查 6 个方向
+        // 如果越界、或者空气、或者是透明方块，就认为此方向是“敞开”的
+        // 只要有 1 个方向敞开，就可见
+        
+
+        for (auto &dir : dirs) {
+            int nx = x + dir[0];
+            int ny = y + dir[1];
+            int nz = z + dir[2];
+            // 越界算可见
+            if (nx < 0 || nx >= worldWidth  ||
+                ny < 0 || ny >= worldHeight ||
+                nz < 0 || nz >= worldDepth) {
+                return true;
+            }
+
+            BlockType neighborType = getBlock(nx, ny, nz);
+            if (isTransparent(neighborType)) {
+                return true;
+            }
+        }
+
+        // 如果六面都被不透明方块包住，则不可见
+        return false;
+    }
+
+    void updateVisibility(int x, int y, int z) {
+        // 更新当前方块的可见性
+        bool visible = isBlockVisible(x, y, z);
+
+        if (visible && !visibleBlocks[x][y][z]) {
+            // 方块从不可见变为可见，加入 GPU
+            addBlockToGPU(x, y, z);
+            visibleBlocks[x][y][z] = true;
+        } else if (!visible && visibleBlocks[x][y][z]) {
+            // 方块从可见变为不可见，从 GPU 移除
+            removeBlockFromGPU(x, y, z);
+            visibleBlocks[x][y][z] = false;
+        }
     }
     
     void renderWireframe(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& blockPos) {
