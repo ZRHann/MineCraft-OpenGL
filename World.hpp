@@ -752,6 +752,10 @@ public:
     }
 
     void updateVisibility(int x, int y, int z) {
+        // 越界检查
+        if (x < 0 || x >= worldWidth || y < 0 || y >= worldHeight || z < 0 || z >= worldDepth) {
+            return;
+        }
         // 更新当前方块的可见性
         bool visible = isBlockVisible(x, y, z);
 
